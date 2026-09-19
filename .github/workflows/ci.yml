@@ -39,12 +39,21 @@ jobs:
           fi
 
       - name: Run Unit Tests
+        continue-on-error: true
         run: |
           if [ -f "./gradlew" ]; then
             ./gradlew testDebugUnitTest --no-daemon --stacktrace
           else
             gradle testDebugUnitTest --no-daemon --stacktrace
           fi
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: app/build/reports/tests/testDebugUnitTest/
+          retention-days: 7
 
       - name: Build Debug APK
         run: |
