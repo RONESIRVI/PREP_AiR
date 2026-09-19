@@ -56,4 +56,24 @@ class ExampleUnitTest {
     // Reset back to default
     com.example.ui.theme.PrepThemeState.isLight3D = true
   }
+
+  @Test
+  fun verify_CircularFocusTimer_formatting() {
+    assertEquals("00:00", com.example.ui.components.formatTimerDisplay(0))
+    assertEquals("00:45", com.example.ui.components.formatTimerDisplay(45))
+    assertEquals("25:00", com.example.ui.components.formatTimerDisplay(1500))
+    assertEquals("01:15:30", com.example.ui.components.formatTimerDisplay(4530))
+  }
+
+  @Test
+  fun verify_Timer_Progress_Math() {
+    val totalSeconds = 1500 // 25 minutes
+    val remainingSeconds = 750 // 12.5 minutes left
+    val progress = (remainingSeconds.toFloat() / totalSeconds).coerceIn(0f, 1f)
+    assertEquals(0.5f, progress, 0.0001f)
+
+    val zeroTotal = 0
+    val safeProgress = if (zeroTotal > 0) (remainingSeconds.toFloat() / zeroTotal).coerceIn(0f, 1f) else 0f
+    assertEquals(0f, safeProgress, 0.0001f)
+  }
 }
