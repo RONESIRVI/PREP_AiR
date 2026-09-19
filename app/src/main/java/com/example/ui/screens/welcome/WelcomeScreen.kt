@@ -44,6 +44,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,6 +77,7 @@ import com.example.ui.theme.PrepSurfaceVariant
 import com.example.ui.theme.PrepTextMuted
 import com.example.ui.theme.PrepTextPrimary
 import com.example.ui.theme.PrepTextSecondary
+import com.example.ui.components.ComingSoonVerificationDialog
 import com.example.ui.theme.PrepThemeState
 import com.example.ui.theme.threeDCard
 import java.io.File
@@ -81,7 +85,7 @@ import java.io.File
 /**
  * Clean, minimal WelcomeScreen featuring:
  * - Prominent Welcome message 🙏
- * - 'Coming Soon' notice for new updates
+ * - 'Coming Soon' Verification Pop-up (Interactive Pop-up dialog)
  * - Visual placeholder area for future app graphics
  * - Preserved and seamlessly integrated In-App OTA Update System
  */
@@ -95,6 +99,7 @@ fun WelcomeScreen(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    var showComingSoonDialog by remember { mutableStateOf(false) }
 
     // Gentle ambient pulse for subtle decorative elements
     val infiniteTransition = rememberInfiniteTransition(label = "ambient_pulse")
@@ -351,119 +356,104 @@ fun WelcomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // ==========================================
-            // 3. 'COMING SOON' NOTICE FOR NEW UPDATES
-            // ==========================================
+            // ============================================================
+            // 3. 'COMING SOON VERIFICATION' POPUP TRIGGER (CARD REPLACED)
+            // ============================================================
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .threeDCard(RoundedCornerShape(20.dp), elevation = 4.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        if (PrepThemeState.isLight3D) Color(0xFFFFFFFF) else PrepSurfaceCard
+                    )
                     .border(
                         width = 1.2.dp,
-                        brush = Brush.linearGradient(
+                        brush = Brush.horizontalGradient(
                             listOf(
                                 PrepGoldPro.copy(alpha = 0.7f),
                                 PrepGreenBright.copy(alpha = 0.7f)
                             )
                         ),
-                        shape = RoundedCornerShape(20.dp)
+                        shape = RoundedCornerShape(16.dp)
                     )
-                    .padding(18.dp)
-                    .testTag("coming_soon_notice_card")
+                    .clickable { showComingSoonDialog = true }
+                    .padding(horizontal = 16.dp, vertical = 13.dp)
+                    .testTag("coming_soon_verification_popup_trigger")
             ) {
-                Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(PrepGoldPro.copy(alpha = 0.18f))
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.RocketLaunch,
-                                    contentDescription = null,
-                                    tint = PrepGoldPro,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(PrepGoldPro.copy(alpha = 0.18f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.RocketLaunch,
+                                contentDescription = null,
+                                tint = PrepGoldPro,
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "Coming Soon",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.ExtraBold,
+                                    text = "Coming Soon Verification",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
                                     color = PrepTextPrimary
                                 )
-                                Text(
-                                    text = "Major Update in Development",
-                                    fontSize = 11.sp,
-                                    color = PrepGoldPro
-                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(PrepGoldPro.copy(alpha = 0.15f))
+                                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "POP-UP",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = PrepGoldPro
+                                    )
+                                }
                             }
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(PrepGoldPro.copy(alpha = 0.15f))
-                                .border(1.dp, PrepGoldPro.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
-                                .padding(horizontal = 9.dp, vertical = 4.dp)
-                        ) {
                             Text(
-                                text = "v1.1.0",
+                                text = "नया अपडेट जल्द ही Release होगा • Tap for details",
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Monospace,
                                 color = PrepGoldPro
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "नया अपडेट जल्द ही release किया जाएगा! नई डिज़ाइन, तेज़ परफॉर्मेंस और बेहतर फोकस टूल्स के साथ एक नया अनुभव आपके लिए तैयार किया जा रहा है।",
-                        fontSize = 12.sp,
-                        lineHeight = 18.sp,
-                        color = PrepTextSecondary
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(20.dp))
                             .background(PrepSurfaceVariant)
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Schedule,
-                            contentDescription = null,
-                            tint = PrepGreenBright,
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Release Target: Ready Soon • In-App OTA Support Active",
+                            text = "Open >",
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = PrepTextPrimary
+                            fontWeight = FontWeight.Bold,
+                            color = PrepGreenBright
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // ===================================================
             // 4. PRESERVED IN-APP OTA UPDATE SYSTEM
@@ -700,5 +690,17 @@ fun WelcomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+
+        // ============================================================
+        // COMING SOON VERIFICATION POP-UP DIALOG (MODAL)
+        // ============================================================
+        ComingSoonVerificationDialog(
+            isOpen = showComingSoonDialog,
+            onDismiss = { showComingSoonDialog = false },
+            onCheckOta = {
+                onCheckForUpdates()
+                onOpenOtaSheet()
+            }
+        )
     }
 }
