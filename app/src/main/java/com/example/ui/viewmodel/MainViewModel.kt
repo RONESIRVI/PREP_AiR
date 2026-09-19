@@ -225,6 +225,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun startSessionForSchedule(schedule: ScheduleEntity) {
         setFocusMode(FocusMode.POMODORO)
         setPresetDuration(45)
+        if (schedule.isStrict) {
+            setStrictMode(true)
+        }
+        if (schedule.blockYouTubeShorts) {
+            setBlockShorts(true)
+        }
+        if (schedule.blockBrowserApps) {
+            setWebsiteBlocker(true)
+        }
         startTimer()
     }
 

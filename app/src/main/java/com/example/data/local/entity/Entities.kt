@@ -23,10 +23,15 @@ data class ScheduleEntity(
     val startTime: String,
     val endTime: String,
     val repeatDays: String,
-    val breakMins: Int = 5,
+    val breakMins: Int = 10,
     val tag: String = "Study",
     val blockNotifs: Boolean = true,
-    val isEnabled: Boolean = true
+    val isEnabled: Boolean = true,
+    val isStrict: Boolean = false,
+    val blockedAppsCount: Int = 0,
+    val blockedAppsSummary: String = "",
+    val blockYouTubeShorts: Boolean = true,
+    val blockBrowserApps: Boolean = true
 )
 
 @Entity(tableName = "app_limits")

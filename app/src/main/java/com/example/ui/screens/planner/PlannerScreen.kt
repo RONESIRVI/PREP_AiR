@@ -21,10 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,6 +42,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,10 +51,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.ScheduleEntity
+import com.example.ui.components.BlockedAppsSelection
+import com.example.ui.components.BreakDurationPickerSheet
+import com.example.ui.components.SelectAppsToBlockSheet
+import com.example.ui.components.StrictSystemInfoDialog
 import com.example.ui.components.WeekCalendarStrip
 import com.example.ui.theme.PrepCardBorder
 import com.example.ui.theme.PrepGreenBright
@@ -77,7 +86,23 @@ fun PlannerScreen(
     onStartSessionForSchedule: (ScheduleEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showAddDialog by remember { mutableStateOf(false) }
+    // Multi-step planner wizard states
+    var showDetailsDialog by remember { mutableStateOf(false) }
+    var showBreakPickerSheet by remember { mutableStateOf(false) }
+    var showAppBlockerSheet by remember { mutableStateOf(false) }
+    var showStrictDialog by remember { mutableStateOf(false) }
+
+    // Standalone sheet invocation for viewing/customizing blocked apps directly
+    var showStandaloneAppBlockerSheet by remember { mutableStateOf(false) }
+
+    // Temporary wizard holding state
+    var pendingName by remember { mutableStateOf("") }
+    var pendingEmoji by remember { mutableStateOf("📚") }
+    var pendingStartTime by remember { mutableStateOf("09:00 AM") }
+    var pendingEndTime by remember { mutableStateOf("11:00 AM") }
+    var pendingTag by remember { mutableStateOf("Deep Study") }
+    var pendingBreakMins by remember { mutableIntStateOf(10) }
+    var pendingAppSelection by remember { mutableStateOf(BlockedAppsSelection()) }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -99,30 +124,62 @@ fun PlannerScreen(
                         color = PrepTextPrimary
                     )
                     Text(
-                        text = "Scheduled study blocks & notification silence",
+                        text = "Scheduled study blocks, breaks & app shields",
                         fontSize = 12.sp,
                         color = PrepTextMuted
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .shadow(2.dp, RoundedCornerShape(8.dp))
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (PrepThemeState.isLight3D) Color(0xFFD1FAE5) else PrepGreenDark)
-                        .border(
-                            1.dp,
-                            if (PrepThemeState.isLight3D) Color(0xFFA7F3D0) else PrepGreenBright.copy(alpha = 0.5f),
-                            RoundedCornerShape(8.dp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Quick Apps Blocker shortcut
+                    Box(
+                        modifier = Modifier
+                            .shadow(2.dp, RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(PrepSurfaceCard)
+                            .border(1.dp, PrepCardBorder, RoundedCornerShape(8.dp))
+                            .clickable { showStandaloneAppBlockerSheet = true }
+                            .padding(horizontal = 8.dp, vertical = 5.dp)
+                            .testTag("planner_block_apps_shortcut")
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Block,
+                                contentDescription = "Apps to Block",
+                                tint = PrepGreenBright,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Apps",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = PrepTextPrimary
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .shadow(2.dp, RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (PrepThemeState.isLight3D) Color(0xFFD1FAE5) else PrepGreenDark)
+                            .border(
+                                1.dp,
+                                if (PrepThemeState.isLight3D) Color(0xFFA7F3D0) else PrepGreenBright.copy(alpha = 0.5f),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = "${schedules.count { it.isEnabled }} ACTIVE",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (PrepThemeState.isLight3D) Color(0xFF047857) else PrepGreenBright
                         )
-                        .padding(horizontal = 10.dp, vertical = 5.dp)
-                ) {
-                    Text(
-                        text = "${schedules.count { it.isEnabled }} ACTIVE",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Black,
-                        color = if (PrepThemeState.isLight3D) Color(0xFF047857) else PrepGreenBright
-                    )
+                    }
                 }
             }
 
@@ -136,12 +193,25 @@ fun PlannerScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = "Today's Study Schedule",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = PrepTextPrimary
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Today's Study Schedule",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = PrepTextPrimary
+                )
+
+                Text(
+                    text = "+ Add Block directly asks Apps & Strict Mode",
+                    fontSize = 11.sp,
+                    color = PrepGreenBright,
+                    fontWeight = FontWeight.Medium
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -163,7 +233,7 @@ fun PlannerScreen(
                             color = PrepTextPrimary
                         )
                         Text(
-                            text = "Tap the + button to add your first study session",
+                            text = "Tap the + button to configure study block, breaks, and blocked apps",
                             fontSize = 12.sp,
                             color = PrepTextMuted
                         )
@@ -179,7 +249,8 @@ fun PlannerScreen(
                             schedule = schedule,
                             onToggle = { onToggleSchedule(schedule) },
                             onDelete = { onDeleteSchedule(schedule.id) },
-                            onStart = { onStartSessionForSchedule(schedule) }
+                            onStart = { onStartSessionForSchedule(schedule) },
+                            onConfigureApps = { showStandaloneAppBlockerSheet = true }
                         )
                     }
                     item {
@@ -191,7 +262,17 @@ fun PlannerScreen(
 
         // Add Floating Action Button with 3D tactile elevation
         FloatingActionButton(
-            onClick = { showAddDialog = true },
+            onClick = {
+                // Initialize default holding values
+                pendingName = ""
+                pendingEmoji = "📚"
+                pendingStartTime = "09:00 AM"
+                pendingEndTime = "11:00 AM"
+                pendingTag = "Deep Study"
+                pendingBreakMins = 10
+                pendingAppSelection = BlockedAppsSelection()
+                showDetailsDialog = true
+            },
             containerColor = PrepGreenBright,
             contentColor = Color.Black,
             shape = CircleShape,
@@ -199,20 +280,109 @@ fun PlannerScreen(
                 .align(Alignment.BottomEnd)
                 .padding(20.dp)
                 .shadow(6.dp, CircleShape, spotColor = PrepGreenBright.copy(alpha = 0.6f))
+                .testTag("add_schedule_fab")
         ) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "Add Schedule")
         }
     }
 
-    if (showAddDialog) {
-        AddScheduleDialog(
-            onDismiss = { showAddDialog = false },
-            onConfirm = { newSchedule ->
-                onAddSchedule(newSchedule)
-                showAddDialog = false
+    // Step 1: Study Block Details Dialog
+    if (showDetailsDialog) {
+        AddScheduleDetailsDialog(
+            name = pendingName,
+            onNameChange = { pendingName = it },
+            selectedEmoji = pendingEmoji,
+            onEmojiChange = { pendingEmoji = it },
+            startTime = pendingStartTime,
+            onStartTimeChange = { pendingStartTime = it },
+            endTime = pendingEndTime,
+            onEndTimeChange = { pendingEndTime = it },
+            tag = pendingTag,
+            onTagChange = { pendingTag = it },
+            onDismiss = { showDetailsDialog = false },
+            onNext = {
+                showDetailsDialog = false
+                showBreakPickerSheet = true
             }
         )
     }
+
+    // Step 2: Set Break Duration Picker Sheet (Matching Screenshot 3)
+    BreakDurationPickerSheet(
+        isOpen = showBreakPickerSheet,
+        initialMinutes = pendingBreakMins,
+        onConfirm = { minutes ->
+            pendingBreakMins = minutes
+            showBreakPickerSheet = false
+            showAppBlockerSheet = true
+        },
+        onDismiss = {
+            showBreakPickerSheet = false
+        }
+    )
+
+    // Step 3: Select Apps to Block Sheet (Matching Screenshot 1 & 2)
+    SelectAppsToBlockSheet(
+        isOpen = showAppBlockerSheet,
+        initialSelection = pendingAppSelection,
+        onApplySelection = { selection ->
+            pendingAppSelection = selection
+            showAppBlockerSheet = false
+            showStrictDialog = true
+        },
+        onDismiss = {
+            showAppBlockerSheet = false
+        }
+    )
+
+    // Step 4: Strict System Information and Decision Dialog
+    StrictSystemInfoDialog(
+        isOpen = showStrictDialog,
+        initialStrict = true,
+        onConfirm = { isStrict ->
+            val blockedAppsSummaryStr = buildString {
+                if (pendingAppSelection.blockYouTubeShorts) append("YouTube Shorts, ")
+                if (pendingAppSelection.blockBrowserApps) append("Browser Apps, ")
+                append("${pendingAppSelection.selectedAppIds.size} Distracting Apps")
+            }
+
+            onAddSchedule(
+                ScheduleEntity(
+                    name = pendingName.ifBlank { "Study Session" }.trim(),
+                    icon = pendingEmoji,
+                    startTime = pendingStartTime.trim(),
+                    endTime = pendingEndTime.trim(),
+                    repeatDays = "Mon-Fri",
+                    breakMins = pendingBreakMins,
+                    tag = pendingTag,
+                    blockNotifs = true,
+                    isEnabled = true,
+                    isStrict = isStrict,
+                    blockedAppsCount = pendingAppSelection.totalCount,
+                    blockedAppsSummary = blockedAppsSummaryStr,
+                    blockYouTubeShorts = pendingAppSelection.blockYouTubeShorts,
+                    blockBrowserApps = pendingAppSelection.blockBrowserApps
+                )
+            )
+            showStrictDialog = false
+        },
+        onDismiss = {
+            showStrictDialog = false
+        }
+    )
+
+    // Standalone sheet for browsing & tweaking blocked apps
+    SelectAppsToBlockSheet(
+        isOpen = showStandaloneAppBlockerSheet,
+        initialSelection = pendingAppSelection,
+        onApplySelection = { selection ->
+            pendingAppSelection = selection
+            showStandaloneAppBlockerSheet = false
+        },
+        onDismiss = {
+            showStandaloneAppBlockerSheet = false
+        }
+    )
 }
 
 @Composable
@@ -221,6 +391,7 @@ fun ScheduleCardItem(
     onToggle: () -> Unit,
     onDelete: () -> Unit,
     onStart: () -> Unit,
+    onConfigureApps: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -292,34 +463,104 @@ fun ScheduleCardItem(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            // Badges row: Tag, Break duration, Strict System badge, Blocked Apps badge
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Tag Badge
+                Box(
+                    modifier = Modifier
+                        .shadow(1.dp, RoundedCornerShape(6.dp))
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(PrepSurfaceVariant)
+                        .border(1.dp, PrepCardBorder, RoundedCornerShape(6.dp))
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = schedule.tag,
+                        fontSize = 10.sp,
+                        color = PrepTextSecondary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                // Break Duration Badge (Screenshot 3 integration)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFF253B23))
+                        .border(1.dp, Color(0xFF3B5D37), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = "☕ ${schedule.breakMins}m Break",
+                        fontSize = 10.sp,
+                        color = Color(0xFF86EFAC),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                // Strict System Badge
+                if (schedule.isStrict) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFF3B1515))
+                            .border(1.dp, PrepRedAlert.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 7.dp, vertical = 3.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = PrepRedAlert,
+                                modifier = Modifier.size(10.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = "Strict System",
+                                fontSize = 10.sp,
+                                color = Color(0xFFFCA5A5),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                // Blocked Apps Indicator
+                val blockedCount = if (schedule.blockedAppsCount > 0) schedule.blockedAppsCount else 15
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(PrepSurfaceVariant)
+                        .border(1.dp, PrepCardBorder, RoundedCornerShape(6.dp))
+                        .clickable { onConfigureApps() }
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = "🚫 $blockedCount Apps Blocked",
+                        fontSize = 10.sp,
+                        color = PrepTextSecondary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Footer row: Repeat days & Action Buttons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .shadow(1.dp, RoundedCornerShape(6.dp))
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(PrepSurfaceVariant)
-                            .border(1.dp, PrepCardBorder, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = schedule.tag,
-                            fontSize = 10.sp,
-                            color = PrepTextSecondary,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Break: ${schedule.breakMins}m • ${schedule.repeatDays}",
-                        fontSize = 11.sp,
-                        color = PrepTextMuted
-                    )
-                }
+                Text(
+                    text = "Repeats: ${schedule.repeatDays}",
+                    fontSize = 11.sp,
+                    color = PrepTextMuted
+                )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
@@ -347,7 +588,7 @@ fun ScheduleCardItem(
                                 RoundedCornerShape(8.dp)
                             )
                             .clickable { onStart() }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
                         Text(
                             text = "START",
@@ -363,36 +604,47 @@ fun ScheduleCardItem(
 }
 
 @Composable
-fun AddScheduleDialog(
+fun AddScheduleDetailsDialog(
+    name: String,
+    onNameChange: (String) -> Unit,
+    selectedEmoji: String,
+    onEmojiChange: (String) -> Unit,
+    startTime: String,
+    onStartTimeChange: (String) -> Unit,
+    endTime: String,
+    onEndTimeChange: (String) -> Unit,
+    tag: String,
+    onTagChange: (String) -> Unit,
     onDismiss: () -> Unit,
-    onConfirm: (ScheduleEntity) -> Unit
+    onNext: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var selectedEmoji by remember { mutableStateOf("📚") }
-    var startTime by remember { mutableStateOf("09:00 AM") }
-    var endTime by remember { mutableStateOf("11:00 AM") }
-    var tag by remember { mutableStateOf("Deep Study") }
-    var breakMins by remember { mutableStateOf("10") }
-
     val emojis = listOf("📚", "⚡", "🔬", "💻", "📖", "🎯", "☕", "🧠")
     val tags = listOf("Deep Study", "Revision", "Practice", "Project", "Exam Prep")
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = PrepSurface,
+        shape = RoundedCornerShape(18.dp),
         title = {
-            Text(
-                text = "Add Study Block",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = PrepTextPrimary
-            )
+            Column {
+                Text(
+                    text = "Add Study Block (Step 1/4)",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = PrepTextPrimary
+                )
+                Text(
+                    text = "Next: Break Duration, Apps Blocker & Strict System",
+                    fontSize = 11.sp,
+                    color = PrepGreenBright
+                )
+            }
         },
         text = {
             Column {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = onNameChange,
                     label = { Text("Block Title (e.g. Physics Revision)") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -403,7 +655,9 @@ fun AddScheduleDialog(
                         focusedLabelColor = PrepGreenBright,
                         unfocusedLabelColor = PrepTextMuted
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("block_title_input")
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -432,7 +686,7 @@ fun AddScheduleDialog(
                                     if (isSelected) PrepGreenBright else PrepCardBorder,
                                     RoundedCornerShape(8.dp)
                                 )
-                                .clickable { selectedEmoji = emoji }
+                                .clickable { onEmojiChange(emoji) }
                         ) {
                             Text(text = emoji, fontSize = 18.sp)
                         }
@@ -447,7 +701,7 @@ fun AddScheduleDialog(
                 ) {
                     OutlinedTextField(
                         value = startTime,
-                        onValueChange = { startTime = it },
+                        onValueChange = onStartTimeChange,
                         label = { Text("Start Time") },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -462,7 +716,7 @@ fun AddScheduleDialog(
                     )
                     OutlinedTextField(
                         value = endTime,
-                        onValueChange = { endTime = it },
+                        onValueChange = onEndTimeChange,
                         label = { Text("End Time") },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -479,49 +733,56 @@ fun AddScheduleDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                OutlinedTextField(
-                    value = breakMins,
-                    onValueChange = { breakMins = it },
-                    label = { Text("Break Duration (minutes)") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrepGreenBright,
-                        unfocusedBorderColor = PrepCardBorder,
-                        focusedTextColor = PrepTextPrimary,
-                        unfocusedTextColor = PrepTextPrimary,
-                        focusedLabelColor = PrepGreenBright,
-                        unfocusedLabelColor = PrepTextMuted
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                Text(
+                    text = "Focus Tag",
+                    fontSize = 12.sp,
+                    color = PrepTextMuted
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    tags.take(3).forEach { t ->
+                        val isSelected = tag == t
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isSelected) PrepGreenDark else PrepSurfaceCard)
+                                .border(
+                                    1.dp,
+                                    if (isSelected) PrepGreenBright else PrepCardBorder,
+                                    RoundedCornerShape(6.dp)
+                                )
+                                .clickable { onTagChange(t) }
+                                .padding(horizontal = 8.dp, vertical = 5.dp)
+                        ) {
+                            Text(
+                                text = t,
+                                fontSize = 11.sp,
+                                color = if (isSelected) PrepGreenBright else PrepTextSecondary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
                     if (name.isNotBlank()) {
-                        onConfirm(
-                            ScheduleEntity(
-                                name = name.trim(),
-                                icon = selectedEmoji,
-                                startTime = startTime.trim(),
-                                endTime = endTime.trim(),
-                                repeatDays = "Mon-Fri",
-                                breakMins = breakMins.toIntOrNull() ?: 5,
-                                tag = tag,
-                                blockNotifs = true,
-                                isEnabled = true
-                            )
-                        )
+                        onNext()
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = PrepGreenBright,
                     contentColor = Color.Black
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.testTag("next_step_button")
             ) {
-                Text("Add Block", fontWeight = FontWeight.Bold)
+                Text("Next: Break Duration ➔", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

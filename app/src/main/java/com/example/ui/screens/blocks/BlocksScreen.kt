@@ -22,9 +22,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.SmartDisplay
+import com.example.ui.components.BlockedAppsSelection
+import com.example.ui.components.SelectAppsToBlockSheet
+import com.example.ui.components.StrictSystemInfoDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -83,6 +87,8 @@ fun BlocksScreen(
     modifier: Modifier = Modifier
 ) {
     var showAddLimitDialog by remember { mutableStateOf(false) }
+    var showSelectAppsSheet by remember { mutableStateOf(false) }
+    var showStrictSystemInfoDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -131,6 +137,69 @@ fun BlocksScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
+            // Select Apps to Block Card (Exact UI Matching Screenshots)
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .threeDCard(RoundedCornerShape(16.dp))
+                        .clickable { showSelectAppsSheet = true }
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(PrepGreenDark)
+                                    .border(1.dp, PrepGreenBright.copy(alpha = 0.4f), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Block,
+                                    contentDescription = null,
+                                    tint = PrepGreenBright,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Select Apps to Block",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrepTextPrimary
+                                )
+                                Text(
+                                    text = "YouTube Shorts, Browsers & 14+ Apps",
+                                    fontSize = 11.sp,
+                                    color = PrepTextMuted
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(PrepGreenBright)
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "Open",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
+            }
+
             // Shield Toggles Section
             item {
                 Text(
@@ -159,13 +228,19 @@ fun BlocksScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Strict Mode
+                    // Strict Mode with Info trigger
                     ShieldToggleRow(
-                        title = "Strict Mode",
-                        subtitle = "Blocks app switcher, exit, and split-screen during focus",
+                        title = "Strict Mode (सख्त मोड)",
+                        subtitle = "Blocks app switcher, exit & uninstallation during focus",
                         icon = Icons.Default.Lock,
                         isChecked = strictModeEnabled,
-                        onCheckedChange = onToggleStrictMode
+                        onCheckedChange = { isChecked ->
+                            if (isChecked) {
+                                showStrictSystemInfoDialog = true
+                            } else {
+                                onToggleStrictMode(false)
+                            }
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -227,6 +302,26 @@ fun BlocksScreen(
             }
         )
     }
+
+    SelectAppsToBlockSheet(
+        isOpen = showSelectAppsSheet,
+        onApplySelection = { sel ->
+            onToggleShorts(sel.blockYouTubeShorts)
+            onToggleWebsiteBlocker(sel.blockBrowserApps)
+            showSelectAppsSheet = false
+        },
+        onDismiss = { showSelectAppsSheet = false }
+    )
+
+    StrictSystemInfoDialog(
+        isOpen = showStrictSystemInfoDialog,
+        initialStrict = strictModeEnabled,
+        onConfirm = { enabled ->
+            onToggleStrictMode(enabled)
+            showStrictSystemInfoDialog = false
+        },
+        onDismiss = { showStrictSystemInfoDialog = false }
+    )
 }
 
 @Composable
