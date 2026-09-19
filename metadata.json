@@ -1,0 +1,6 @@
+{
+  "name": "PREP_AiR",
+  "description": "Study focus timer and phone discipline app with circular focus rings, daily planner, app blocker, study groups, and OTA GitHub auto-update system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

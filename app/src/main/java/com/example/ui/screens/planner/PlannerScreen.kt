@@ -1,0 +1,505 @@
+package com.example.ui.screens.planner
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.data.local.entity.ScheduleEntity
+import com.example.ui.components.WeekCalendarStrip
+import com.example.ui.theme.PrepCardBorder
+import com.example.ui.theme.PrepGreenBright
+import com.example.ui.theme.PrepGreenDark
+import com.example.ui.theme.PrepRedAlert
+import com.example.ui.theme.PrepSurface
+import com.example.ui.theme.PrepSurfaceCard
+import com.example.ui.theme.PrepSurfaceVariant
+import com.example.ui.theme.PrepTextMuted
+import com.example.ui.theme.PrepTextPrimary
+import com.example.ui.theme.PrepTextSecondary
+
+@Composable
+fun PlannerScreen(
+    schedules: List<ScheduleEntity>,
+    selectedDayIndex: Int,
+    onDaySelected: (Int) -> Unit,
+    onToggleSchedule: (ScheduleEntity) -> Unit,
+    onAddSchedule: (ScheduleEntity) -> Unit,
+    onDeleteSchedule: (Long) -> Unit,
+    onStartSessionForSchedule: (ScheduleEntity) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 8.dp)
+        ) {
+            // Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    Text(
+                        text = "Daily Planner",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PrepTextPrimary
+                    )
+                    Text(
+                        text = "Scheduled study blocks & notification silence",
+                        fontSize = 12.sp,
+                        color = PrepTextMuted
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .background(PrepGreenDark, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = "${schedules.count { it.isEnabled }} ACTIVE",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PrepGreenBright
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Week calendar strip
+            WeekCalendarStrip(
+                selectedDayIndex = selectedDayIndex,
+                onDaySelected = onDaySelected
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Today's Study Schedule",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = PrepTextPrimary
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (schedules.isEmpty()) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .background(PrepSurfaceCard, RoundedCornerShape(14.dp))
+                        .border(1.dp, PrepCardBorder, RoundedCornerShape(14.dp))
+                        .padding(20.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "📅", fontSize = 32.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No study blocks scheduled",
+                            fontWeight = FontWeight.Bold,
+                            color = PrepTextPrimary
+                        )
+                        Text(
+                            text = "Tap the + button to add your first study session",
+                            fontSize = 12.sp,
+                            color = PrepTextMuted
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(schedules, key = { it.id }) { schedule ->
+                        ScheduleCardItem(
+                            schedule = schedule,
+                            onToggle = { onToggleSchedule(schedule) },
+                            onDelete = { onDeleteSchedule(schedule.id) },
+                            onStart = { onStartSessionForSchedule(schedule) }
+                        )
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(80.dp))
+                    }
+                }
+            }
+        }
+
+        // Add Floating Action Button
+        FloatingActionButton(
+            onClick = { showAddDialog = true },
+            containerColor = PrepGreenBright,
+            contentColor = Color.Black,
+            shape = CircleShape,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(20.dp)
+        ) {
+            Icon(imageVector = Icons.Default.Add, contentDescription = "Add Schedule")
+        }
+    }
+
+    if (showAddDialog) {
+        AddScheduleDialog(
+            onDismiss = { showAddDialog = false },
+            onConfirm = { newSchedule ->
+                onAddSchedule(newSchedule)
+                showAddDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun ScheduleCardItem(
+    schedule: ScheduleEntity,
+    onToggle: () -> Unit,
+    onDelete: () -> Unit,
+    onStart: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(PrepSurfaceCard)
+            .border(
+                1.dp,
+                if (schedule.isEnabled) PrepGreenBright.copy(alpha = 0.4f) else PrepCardBorder,
+                RoundedCornerShape(14.dp)
+            )
+            .padding(14.dp)
+    ) {
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = schedule.icon, fontSize = 22.sp)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = schedule.name,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrepTextPrimary
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Alarm,
+                                contentDescription = null,
+                                tint = PrepGreenBright,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${schedule.startTime} - ${schedule.endTime}",
+                                fontSize = 12.sp,
+                                color = PrepGreenBright,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+
+                Switch(
+                    checked = schedule.isEnabled,
+                    onCheckedChange = { onToggle() },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.Black,
+                        checkedTrackColor = PrepGreenBright,
+                        uncheckedTrackColor = PrepSurfaceVariant
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .background(PrepSurfaceVariant, RoundedCornerShape(6.dp))
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = schedule.tag,
+                            fontSize = 10.sp,
+                            color = PrepTextSecondary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Break: ${schedule.breakMins}m • ${schedule.repeatDays}",
+                        fontSize = 11.sp,
+                        color = PrepTextMuted
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = PrepTextMuted,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(PrepGreenDark)
+                            .clickable { onStart() }
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = "START",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrepGreenBright
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AddScheduleDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (ScheduleEntity) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var selectedEmoji by remember { mutableStateOf("📚") }
+    var startTime by remember { mutableStateOf("09:00 AM") }
+    var endTime by remember { mutableStateOf("11:00 AM") }
+    var tag by remember { mutableStateOf("Deep Study") }
+    var breakMins by remember { mutableStateOf("10") }
+
+    val emojis = listOf("📚", "⚡", "🔬", "💻", "📖", "🎯", "☕", "🧠")
+    val tags = listOf("Deep Study", "Revision", "Practice", "Project", "Exam Prep")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = PrepSurface,
+        title = {
+            Text(
+                text = "Add Study Block",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = PrepTextPrimary
+            )
+        },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Block Title (e.g. Physics Revision)") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrepGreenBright,
+                        unfocusedBorderColor = PrepCardBorder,
+                        focusedTextColor = PrepTextPrimary,
+                        unfocusedTextColor = PrepTextPrimary,
+                        focusedLabelColor = PrepGreenBright,
+                        unfocusedLabelColor = PrepTextMuted
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Emoji Picker
+                Text(
+                    text = "Icon Emoji",
+                    fontSize = 12.sp,
+                    color = PrepTextMuted
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    emojis.forEach { emoji ->
+                        val isSelected = selectedEmoji == emoji
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSelected) PrepGreenDark else PrepSurfaceCard)
+                                .border(
+                                    1.dp,
+                                    if (isSelected) PrepGreenBright else PrepCardBorder,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .clickable { selectedEmoji = emoji }
+                        ) {
+                            Text(text = emoji, fontSize = 18.sp)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = startTime,
+                        onValueChange = { startTime = it },
+                        label = { Text("Start Time") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrepGreenBright,
+                            unfocusedBorderColor = PrepCardBorder,
+                            focusedTextColor = PrepTextPrimary,
+                            unfocusedTextColor = PrepTextPrimary,
+                            focusedLabelColor = PrepGreenBright,
+                            unfocusedLabelColor = PrepTextMuted
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = endTime,
+                        onValueChange = { endTime = it },
+                        label = { Text("End Time") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrepGreenBright,
+                            unfocusedBorderColor = PrepCardBorder,
+                            focusedTextColor = PrepTextPrimary,
+                            unfocusedTextColor = PrepTextPrimary,
+                            focusedLabelColor = PrepGreenBright,
+                            unfocusedLabelColor = PrepTextMuted
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = breakMins,
+                    onValueChange = { breakMins = it },
+                    label = { Text("Break Duration (minutes)") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrepGreenBright,
+                        unfocusedBorderColor = PrepCardBorder,
+                        focusedTextColor = PrepTextPrimary,
+                        unfocusedTextColor = PrepTextPrimary,
+                        focusedLabelColor = PrepGreenBright,
+                        unfocusedLabelColor = PrepTextMuted
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (name.isNotBlank()) {
+                        onConfirm(
+                            ScheduleEntity(
+                                name = name.trim(),
+                                icon = selectedEmoji,
+                                startTime = startTime.trim(),
+                                endTime = endTime.trim(),
+                                repeatDays = "Mon-Fri",
+                                breakMins = breakMins.toIntOrNull() ?: 5,
+                                tag = tag,
+                                blockNotifs = true,
+                                isEnabled = true
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrepGreenBright,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Add Block", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = PrepTextMuted),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
+}

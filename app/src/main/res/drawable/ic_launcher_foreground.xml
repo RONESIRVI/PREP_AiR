@@ -1,0 +1,63 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Top Stopwatch Crown Button -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M51,26 h6 v4 h-6 z" />
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M48,24 h12 v2 h-12 z" />
+        
+    <!-- Main Focus Timer Outer Ring -->
+    <path
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,34 A22,22 0 1 1 36,41.5">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="32"
+                android:startY="32"
+                android:endX="76"
+                android:endY="76"
+                android:type="linear">
+                <item android:color="#4CEF8D" android:offset="0.0" />
+                <item android:color="#38BDF8" android:offset="0.7" />
+                <item android:color="#FBBF24" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    
+    <!-- Timer Center Target Dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,53 a3,3 0 1 0 0.1,0 z" />
+        
+    <!-- Clock Hands Pointing to Focus Time -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,54 L54,43" />
+    <path
+        android:strokeColor="#4CEF8D"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,54 L63,59" />
+        
+    <!-- Wings / Focus Flame Accents -->
+    <path
+        android:fillColor="#224CEF8D"
+        android:strokeColor="#4CEF8D"
+        android:strokeWidth="1.2"
+        android:pathData="M32,56 C26,50 25,60 30,66 C31,64 32,60 35,58 Z" />
+    <path
+        android:fillColor="#2238BDF8"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="1.2"
+        android:pathData="M76,56 C82,50 83,60 78,66 C77,64 76,60 73,58 Z" />
+</vector>
