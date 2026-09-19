@@ -85,6 +85,7 @@ fun PrepAirApp(viewModel: MainViewModel) {
 
     // Collect Viewmodel States for In-App OTA Update System
     val otaStatus by viewModel.otaStatus.collectAsState()
+    val postponedUpdate by viewModel.postponedUpdate.collectAsState()
 
     Scaffold(
         topBar = {
@@ -227,10 +228,14 @@ fun PrepAirApp(viewModel: MainViewModel) {
         // Single Dedicated Welcome Screen with CSS Graphics & Integrated OTA System
         WelcomeScreen(
             otaStatus = otaStatus,
+            postponedUpdate = postponedUpdate,
             onCheckForUpdates = { viewModel.checkForUpdates() },
+            onSimulateTestUpdate = { viewModel.simulateLiveRelease() },
             onOpenOtaSheet = { showOtaSheet = true },
             onDownloadUpdate = { updateInfo -> viewModel.downloadUpdate(updateInfo) },
             onInstallApk = { apkFile -> viewModel.installApk(apkFile) },
+            onPostponeToUpdateSetup = { updateInfo -> viewModel.postponeToUpdateSetup(updateInfo) },
+            onClearPostponedUpdate = { viewModel.clearPostponedUpdate() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)

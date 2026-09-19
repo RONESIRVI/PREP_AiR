@@ -94,6 +94,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // OTA Update State
     val otaStatus: StateFlow<UpdateStatus> = otaUpdateManager.updateStatus
 
+    // Update Setup Queue: stores postponed updates for later 1-click in-app install
+    private val _postponedUpdate = MutableStateFlow<UpdateInfo?>(null)
+    val postponedUpdate: StateFlow<UpdateInfo?> = _postponedUpdate.asStateFlow()
+
     init {
         // Automatically check GitHub for updates on launch as requested
         if (otaUpdateManager.autoCheckOnStart) {
@@ -315,6 +319,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun dismissUpdate() {
         otaUpdateManager.dismissUpdate()
+    }
+
+    /**
+     * Postpones the detected update and stores it in Update Setup so the user
+     * can install it later with a single tap without being interrupted.
+     */
+    fun postponeToUpdateSetup(updateInfo: UpdateInfo) {
+        _postponedUpdate.value = updateInfo
+        otaUpdateManager.dismissUpdate()
+    }
+
+    fun clearPostponedUpdate() {
+        _postponedUpdate.value = null
+    }
+
+    fun installFromUpdateSetup(updateInfo: UpdateInfo) {
+        viewModelScope.launch {
+            otaUpdateManager.downloadUpdate(updateInfo)
+        }
     }
 
     fun setGithubRepo(repo: String) {
