@@ -2,6 +2,7 @@ name: PREP_AiR Release & OTA Push
 
 on:
   push:
+    branches: [ "main", "master" ]
     tags:
       - 'v*' # Trigger on version tags e.g. v1.0.1, v1.1.0, v2.0.0
   workflow_dispatch:
@@ -69,8 +70,12 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TAG="${{ github.event.inputs.version_tag }}"
-          else
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
+          else
+            # When triggered on push to main/master, use app version from build.gradle.kts or commit short SHA
+            BUILD_VER=$(grep 'versionName = ' app/build.gradle.kts | head -n 1 | sed 's/.*"\(.*\)".*/\1/' || echo "1.0.0")
+            TAG="v${BUILD_VER}-${GITHUB_SHA::7}"
           fi
           echo "RELEASE_TAG=${TAG}" >> $GITHUB_OUTPUT
           # Clean version name without leading 'v'
