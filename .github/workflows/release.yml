@@ -1,0 +1,143 @@
+name: PREP_AiR Release & OTA Push
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags e.g. v1.0.1, v1.1.0, v2.0.0
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag to release (e.g. v1.0.1)'
+        required: true
+        default: 'v1.0.1'
+      release_title:
+        description: 'Release Title'
+        required: false
+        default: 'PREP_AiR Live Update'
+      release_notes:
+        description: 'Release Notes / Changelog'
+        required: false
+        default: '• New OTA automatic update improvements\n• Performance optimizations and bug fixes'
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-and-release:
+    name: Build APK & Publish OTA Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant Execute Permission to Gradlew
+        run: |
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+          else
+            echo "gradlew not found, will use system gradle"
+          fi
+
+      - name: Decode Release Keystore (Optional)
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "Found KEYSTORE_BASE64 secret, decoding to my-upload-key.jks..."
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-upload-key.jks
+          elif [ -f "debug.keystore.base64" ]; then
+            echo "Decoding bundled debug.keystore.base64..."
+            base64 --decode debug.keystore.base64 > debug.keystore || true
+          fi
+
+      - name: Determine Version Tag
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.version_tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "RELEASE_TAG=${TAG}" >> $GITHUB_OUTPUT
+          # Clean version name without leading 'v'
+          VERSION_NAME="${TAG#v}"
+          echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "Building PREP_AiR for release tag: ${TAG} (Version: ${VERSION_NAME})"
+
+      - name: Build Android APK
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          # Try building release APK; if signing key is not provided in secrets,
+          # build debug APK so a working signed APK is always generated and ready for installation!
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleRelease || ./gradlew assembleDebug
+          else
+            gradle assembleRelease || gradle assembleDebug
+          fi
+
+      - name: Prepare Release APK Asset
+        id: apk
+        run: |
+          TAG="${{ steps.vars.outputs.RELEASE_TAG }}"
+          VERSION="${{ steps.vars.outputs.VERSION_NAME }}"
+          DEST_NAME="PREP_AiR-${TAG}.apk"
+          
+          # Locate built APK in build outputs
+          APK_PATH=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
+          
+          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+            echo "Error: No APK file generated!"
+            exit 1
+          fi
+          
+          echo "Found generated APK: $APK_PATH"
+          cp "$APK_PATH" "$DEST_NAME"
+          ls -lh "$DEST_NAME"
+          echo "apk_path=${DEST_NAME}" >> $GITHUB_OUTPUT
+          echo "apk_filename=${DEST_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release & Upload OTA APK Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.RELEASE_TAG }}
+          name: ${{ github.event.inputs.release_title || format('PREP_AiR {0}', steps.vars.outputs.RELEASE_TAG) }}
+          body: |
+            ${{ github.event.inputs.release_notes || '### 🚀 PREP_AiR Live Release' }}
+
+            ---
+            ### 📲 In-App OTA Auto-Update:
+            Installed PREP_AiR applications will automatically detect this release and prompt users for a 1-click update.
+            
+            **Direct Download:** [${{ steps.apk.outputs.apk_filename }}](https://github.com/${{ github.repository }}/releases/download/${{ steps.vars.outputs.RELEASE_TAG }}/${{ steps.apk.outputs.apk_filename }})
+          files: |
+            ${{ steps.apk.outputs.apk_path }}
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Summary
+        run: |
+          echo "=========================================="
+          echo "✅ PREP_AiR OTA Release Published!"
+          echo "Tag: ${{ steps.vars.outputs.RELEASE_TAG }}"
+          echo "Asset: ${{ steps.apk.outputs.apk_filename }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Download URL: https://github.com/${{ github.repository }}/releases/download/${{ steps.vars.outputs.RELEASE_TAG }}/${{ steps.apk.outputs.apk_filename }}"
+          echo "=========================================="

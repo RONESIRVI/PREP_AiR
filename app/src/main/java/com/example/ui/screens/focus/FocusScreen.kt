@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Pause
@@ -354,6 +355,11 @@ fun FocusScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
+        // Weekly Consistency Ribbon
+        WeeklyConsistencyRibbon()
+
+        Spacer(modifier = Modifier.height(14.dp))
+
         // Screen Time vs Focus Time Stats Card (Blueprint Section 2)
         Box(
             modifier = Modifier
@@ -457,5 +463,105 @@ private fun formatSeconds(seconds: Int): String {
         String.format("%02d:%02d:%02d", hrs, mins, secs)
     } else {
         String.format("%02d:%02d", mins, secs)
+    }
+}
+
+@Composable
+fun WeeklyConsistencyRibbon() {
+    val days = listOf("M", "T", "W", "T", "F", "S", "S")
+    val completed = listOf(true, true, true, true, true, false, false)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(PrepSurfaceCard)
+            .border(1.dp, PrepCardBorder, RoundedCornerShape(14.dp))
+            .padding(14.dp)
+    ) {
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "🔥", fontSize = 16.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "5-Day Focus Streak",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PrepTextPrimary
+                    )
+                }
+                Text(
+                    text = "Weekly Target: 85%",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = PrepGreenBright
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                days.forEachIndexed { index, day ->
+                    val isDone = completed[index]
+                    val isToday = index == 4 // Friday
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    when {
+                                        isToday -> PrepGreenDark
+                                        isDone -> PrepGreenBright.copy(alpha = 0.2f)
+                                        else -> PrepSurfaceVariant
+                                    }
+                                )
+                                .border(
+                                    1.dp,
+                                    when {
+                                        isToday -> PrepGreenBright
+                                        isDone -> PrepGreenBright.copy(alpha = 0.5f)
+                                        else -> PrepCardBorder
+                                    },
+                                    CircleShape
+                                )
+                        ) {
+                            if (isDone) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = if (isToday) PrepGreenBright else PrepGreenBright.copy(alpha = 0.8f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            } else {
+                                Text(
+                                    text = "·",
+                                    fontSize = 18.sp,
+                                    color = PrepTextMuted
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = day,
+                            fontSize = 11.sp,
+                            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isToday) PrepGreenBright else PrepTextMuted
+                        )
+                    }
+                }
+            }
+        }
     }
 }

@@ -1,63 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Top Stopwatch Crown Button -->
+
+    <!-- Group strictly centered inside 66dp safe zone (radius 31, center 54,54) -->
+    <!-- Outer Focus Energy Ring with Sweep Gradient -->
     <path
-        android:fillColor="#38BDF8"
-        android:pathData="M51,26 h6 v4 h-6 z" />
-    <path
-        android:fillColor="#4CAF50"
-        android:pathData="M48,24 h12 v2 h-12 z" />
-        
-    <!-- Main Focus Timer Outer Ring -->
-    <path
-        android:strokeWidth="4.5"
+        android:strokeWidth="3.8"
         android:strokeLineCap="round"
-        android:pathData="M54,34 A22,22 0 1 1 36,41.5">
+        android:pathData="M54,26 A28,28 0 1 1 32,37">
         <aapt:attr name="android:strokeColor">
             <gradient
-                android:startX="32"
-                android:startY="32"
-                android:endX="76"
-                android:endY="76"
+                android:startX="26"
+                android:startY="26"
+                android:endX="82"
+                android:endY="82"
                 android:type="linear">
                 <item android:color="#4CEF8D" android:offset="0.0" />
-                <item android:color="#38BDF8" android:offset="0.7" />
+                <item android:color="#38BDF8" android:offset="0.6" />
                 <item android:color="#FBBF24" android:offset="1.0" />
             </gradient>
         </aapt:attr>
     </path>
-    
-    <!-- Timer Center Target Dot -->
+
+    <!-- Ring Accent Orbital Nodes -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,53 a3,3 0 1 0 0.1,0 z" />
-        
-    <!-- Clock Hands Pointing to Focus Time -->
+        android:fillColor="#4CEF8D"
+        android:pathData="M54,23 a3,3 0 1 0 0.01,0 Z" />
     <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2.5"
+        android:fillColor="#38BDF8"
+        android:pathData="M82,54 a2.2,2.2 0 1 0 0.01,0 Z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M54,82 a2.5,2.5 0 1 0 0.01,0 Z" />
+
+    <!-- Sleek Geometric Focus Shield / Hourglass Body -->
+    <path
+        android:strokeWidth="1.8"
         android:strokeLineCap="round"
-        android:pathData="M54,54 L54,43" />
+        android:strokeLineJoin="round"
+        android:pathData="M37,34 L71,34 L62,51 L71,68 L37,68 L46,51 Z">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="37"
+                android:startY="34"
+                android:endX="71"
+                android:endY="68"
+                android:type="linear">
+                <item android:color="#504CEF8D" android:offset="0.0" />
+                <item android:color="#3038BDF8" android:offset="0.5" />
+                <item android:color="#504CEF8D" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="37"
+                android:startY="34"
+                android:endX="71"
+                android:endY="68"
+                android:type="linear">
+                <item android:color="#25123020" android:offset="0.0" />
+                <item android:color="#350A1A12" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Central Dynamic Lightning Bolt Symbol of Peak Focus & Discipline -->
     <path
-        android:strokeColor="#4CEF8D"
-        android:strokeWidth="2.5"
+        android:pathData="M56,33 L45,51 L53,51 L48,69 L63,48 L55,48 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="45"
+                android:startY="33"
+                android:endX="63"
+                android:endY="69"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#4CEF8D" android:offset="0.35" />
+                <item android:color="#22C55E" android:offset="0.75" />
+                <item android:color="#FBBF24" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Inner Core Lightning Specular Flare -->
+    <path
+        android:fillColor="#80FFFFFF"
+        android:pathData="M55,36 L47,50 L52,50 L49,60 L57,49 L54,49 Z" />
+
+    <!-- Lateral Focus Turbine Wings -->
+    <path
+        android:strokeColor="#604CEF8D"
+        android:strokeWidth="1.5"
         android:strokeLineCap="round"
-        android:pathData="M54,54 L63,59" />
-        
-    <!-- Wings / Focus Flame Accents -->
+        android:pathData="M31,48 L35,54 L31,60" />
     <path
-        android:fillColor="#224CEF8D"
-        android:strokeColor="#4CEF8D"
-        android:strokeWidth="1.2"
-        android:pathData="M32,56 C26,50 25,60 30,66 C31,64 32,60 35,58 Z" />
-    <path
-        android:fillColor="#2238BDF8"
-        android:strokeColor="#38BDF8"
-        android:strokeWidth="1.2"
-        android:pathData="M76,56 C82,50 83,60 78,66 C77,64 76,60 73,58 Z" />
+        android:strokeColor="#6038BDF8"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M77,48 L73,54 L77,60" />
+
 </vector>

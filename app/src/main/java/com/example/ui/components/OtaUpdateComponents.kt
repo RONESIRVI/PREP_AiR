@@ -26,6 +26,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -703,6 +707,124 @@ fun OtaUpdateCenterSheet(
                         uncheckedTrackColor = PrepSurfaceVariant
                     )
                 )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // GitHub Actions Workflow & Push Deployment Guide
+            Text(
+                text = "Live CI/CD Deployment Guide",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = PrepTextPrimary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val clipboard = LocalClipboardManager.current
+            var copiedWorkflowCmd by remember { mutableStateOf(false) }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(PrepSurfaceCard)
+                    .border(1.dp, PrepCardBorder, RoundedCornerShape(12.dp))
+                    .padding(14.dp)
+            ) {
+                Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Terminal,
+                            contentDescription = "Terminal",
+                            tint = PrepGreenBright,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "How to Push a Live Update via GitHub",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrepTextPrimary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "The .github/workflows/release.yml workflow automatically builds the APK and publishes an OTA release whenever you push a version tag:",
+                        fontSize = 11.sp,
+                        color = PrepTextSecondary,
+                        lineHeight = 16.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val commandToRun = "git tag v1.0.1 && git push origin v1.0.1"
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF07120A))
+                            .border(1.dp, PrepCardBorder, RoundedCornerShape(8.dp))
+                            .padding(10.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "$ $commandToRun",
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = PrepGreenBright,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy",
+                                tint = PrepTextMuted,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clickable {
+                                        clipboard.setText(AnnotatedString(commandToRun))
+                                        copiedWorkflowCmd = true
+                                    }
+                            )
+                        }
+                    }
+
+                    if (copiedWorkflowCmd) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Copied to clipboard!",
+                            fontSize = 10.sp,
+                            color = PrepGreenBright
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .background(PrepGreenBright, CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "PREP_AiR will detect this release and prompt users automatically.",
+                            fontSize = 10.sp,
+                            color = PrepTextMuted
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HourglassBottom
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,6 +59,7 @@ import com.example.data.ota.UpdateStatus
 import com.example.ui.components.FocusMusicPlayerSheet
 import com.example.ui.components.OtaFloatingBanner
 import com.example.ui.components.OtaUpdateCenterSheet
+import com.example.ui.components.SettingsPreferencesSheet
 import com.example.ui.screens.blocks.BlocksScreen
 import com.example.ui.screens.focus.FocusScreen
 import com.example.ui.screens.groups.GroupsScreen
@@ -102,6 +104,7 @@ fun PrepAirApp(viewModel: MainViewModel) {
     var selectedPlannerDayIndex by remember { mutableStateOf(4) } // Today Friday
     var showMusicSheet by remember { mutableStateOf(false) }
     var showOtaSheet by remember { mutableStateOf(false) }
+    var showSettingsSheet by remember { mutableStateOf(false) }
 
     // Collect Viewmodel States
     val otaStatus by viewModel.otaStatus.collectAsState()
@@ -228,6 +231,23 @@ fun PrepAirApp(viewModel: MainViewModel) {
                                 imageVector = Icons.Default.GraphicEq,
                                 contentDescription = "Focus Music",
                                 tint = if (isAudioPlaying) PrepGreenBright else PrepTextMuted,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        // Settings & CI/CD Hub Button
+                        IconButton(
+                            onClick = { showSettingsSheet = true },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(PrepSurfaceCard, CircleShape)
+                                .border(1.dp, PrepCardBorder, CircleShape)
+                                .testTag("settings_sheet_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings & CI/CD Hub",
+                                tint = PrepTextPrimary,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -395,5 +415,16 @@ fun PrepAirApp(viewModel: MainViewModel) {
         onDownloadUpdate = { updateInfo -> viewModel.downloadUpdate(updateInfo) },
         onInstallApk = { apkFile -> viewModel.installApk(apkFile) },
         onDismiss = { showOtaSheet = false }
+    )
+
+    // Settings & CI/CD Hub Modal Sheet
+    SettingsPreferencesSheet(
+        isOpen = showSettingsSheet,
+        currentRepo = viewModel.otaUpdateManager.githubRepo,
+        onOpenUpdateCenter = {
+            showSettingsSheet = false
+            showOtaSheet = true
+        },
+        onDismiss = { showSettingsSheet = false }
     )
 }
