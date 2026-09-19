@@ -490,6 +490,41 @@ fun UpdateSetupDialog(
                         Spacer(modifier = Modifier.height(12.dp))
                     }
 
+                    is UpdateStatus.Installing -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(PrepGreenDark.copy(alpha = 0.3f))
+                                .border(1.dp, PrepGreenBright.copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+                                .padding(14.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.RocketLaunch,
+                                    contentDescription = null,
+                                    tint = PrepGreenBright,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "Installation In Progress...",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrepGreenBright
+                                    )
+                                    Text(
+                                        text = "Package manager running. No repetitive installations needed.",
+                                        fontSize = 10.sp,
+                                        color = PrepTextMuted
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
                     is UpdateStatus.UpToDate -> {
                         Box(
                             modifier = Modifier

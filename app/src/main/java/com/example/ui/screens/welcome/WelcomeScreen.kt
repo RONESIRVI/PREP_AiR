@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -885,6 +886,150 @@ fun WelcomeScreen(
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
+                            }
+                        }
+
+                        is UpdateStatus.Installing -> {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(PrepGreenDark.copy(alpha = 0.35f))
+                                    .border(1.2.dp, PrepGreenBright, RoundedCornerShape(12.dp))
+                                    .padding(14.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.RocketLaunch,
+                                        contentDescription = null,
+                                        tint = PrepGreenBright,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "🚀 इंस्टॉलेशन शुरू हो गया है (v${s.version})",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrepGreenBright
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "पैकेज एंड्रॉइड इंस्टॉलर को हैंडओवर हो गया है। आपको बार-बार इंस्टॉलेशन करने की आवश्यकता नहीं है।",
+                                    fontSize = 11.sp,
+                                    color = PrepTextSecondary,
+                                    lineHeight = 15.sp
+                                )
+                            }
+                        }
+
+                        is UpdateStatus.UpToDate -> {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (PrepThemeState.isLight3D) Color(0xFFF0FDF4) else PrepGreenDark.copy(alpha = 0.25f))
+                                    .border(1.2.dp, PrepGreenBright.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Verified,
+                                            contentDescription = null,
+                                            tint = PrepGreenBright,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "सिस्टम पूरी तरह अप-टू-डेट है (v${s.currentVersion})",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (PrepThemeState.isLight3D) Color(0xFF166534) else PrepGreenBright
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(PrepGreenBright.copy(alpha = 0.2f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "LATEST",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = PrepGreenBright
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "✓ बार-बार इंस्टॉलेशन की ज़रूरत नहीं • OTA ऑटो-डिटेक्ट बैकग्राउंड में एक्टिव है",
+                                    fontSize = 10.sp,
+                                    color = if (PrepThemeState.isLight3D) Color(0xFF14532D) else PrepTextSecondary
+                                )
+
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
+                                        onClick = onCheckForUpdates,
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (PrepThemeState.isLight3D) Color(0xFF0F172A) else PrepSurfaceCard,
+                                            contentColor = Color.White
+                                        ),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(36.dp)
+                                            .testTag("welcome_check_updates_btn")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Refresh,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(13.dp),
+                                            tint = PrepGreenBright
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Re-check OTA",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = onSimulateTestUpdate,
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(36.dp)
+                                            .testTag("welcome_simulate_update_btn")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AutoAwesome,
+                                            contentDescription = null,
+                                            tint = PrepGoldPro,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Test Update v1.1.0",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = PrepTextPrimary
+                                        )
+                                    }
+                                }
                             }
                         }
 

@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -552,6 +553,30 @@ fun OtaUpdateCenterSheet(
                                 Text(
                                     text = "Install Update Now",
                                     fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                    is UpdateStatus.Installing -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.RocketLaunch,
+                                contentDescription = "Installing",
+                                tint = PrepGreenBright,
+                                modifier = Modifier.size(26.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Installation In Progress...",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrepGreenBright
+                                )
+                                Text(
+                                    text = "Dispatched v${status.version} to Android installer. No repeated install needed.",
+                                    fontSize = 12.sp,
+                                    color = PrepTextMuted
                                 )
                             }
                         }

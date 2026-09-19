@@ -44,6 +44,7 @@ sealed class UpdateStatus {
         val updateInfo: UpdateInfo
     ) : UpdateStatus()
     data class ReadyToInstall(val apkFile: File, val updateInfo: UpdateInfo) : UpdateStatus()
+    data class Installing(val version: String, val timestamp: Long = System.currentTimeMillis()) : UpdateStatus()
     data class UpToDate(val currentVersion: String, val lastCheckedTime: Long) : UpdateStatus()
     data class Error(val message: String, val currentVersion: String) : UpdateStatus()
 }
@@ -55,17 +56,32 @@ class OtaUpdateManager(private val context: Context) {
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
 
+    private val prefs = context.getSharedPreferences("prep_air_ota_prefs", Context.MODE_PRIVATE)
+
     private val _updateStatus = MutableStateFlow<UpdateStatus>(
         UpdateStatus.Idle(currentVersion = BuildConfig.VERSION_NAME)
     )
     val updateStatus: StateFlow<UpdateStatus> = _updateStatus.asStateFlow()
 
-    // Configurable GitHub repo (e.g. "aariz/PREP_AiR" or user specified)
-    var githubRepo: String = "aariz/PREP_AiR"
-        private set
+    // Configurable GitHub repo persisted in preferences
+    var githubRepo: String
+        get() = prefs.getString("github_repo", "aariz/PREP_AiR") ?: "aariz/PREP_AiR"
+        private set(value) {
+            prefs.edit().putString("github_repo", value).apply()
+        }
 
-    var autoCheckOnStart: Boolean = true
-        private set
+    var autoCheckOnStart: Boolean
+        get() = prefs.getBoolean("auto_check_on_start", true)
+        private set(value) {
+            prefs.edit().putBoolean("auto_check_on_start", value).apply()
+        }
+
+    // Remembers the last dispatched or installed version to prevent repeated installation prompts
+    var lastHandledVersion: String?
+        get() = prefs.getString("last_handled_version", null)
+        private set(value) {
+            prefs.edit().putString("last_handled_version", value).apply()
+        }
 
     fun setGithubRepository(repo: String) {
         githubRepo = repo.trim().removePrefix("https://github.com/").removeSuffix(".git")
@@ -73,6 +89,10 @@ class OtaUpdateManager(private val context: Context) {
 
     fun setAutoCheckEnabled(enabled: Boolean) {
         autoCheckOnStart = enabled
+    }
+
+    fun resetHandledVersion() {
+        lastHandledVersion = null
     }
 
     val currentVersionName: String
@@ -126,21 +146,30 @@ class OtaUpdateManager(private val context: Context) {
                     }
 
                     if (isNewerVersion(tagName, BuildConfig.VERSION_NAME)) {
-                        val updateInfo = UpdateInfo(
-                            versionName = tagName,
-                            versionCode = BuildConfig.VERSION_CODE + 1,
-                            releaseTitle = releaseName,
-                            releaseNotes = releaseBody,
-                            apkDownloadUrl = apkUrl.ifEmpty { "https://github.com/$githubRepo/releases/download/v$tagName/$apkName" },
-                            apkFileName = apkName,
-                            apkSizeBytes = apkSize,
-                            publishedAt = publishedAt
-                        )
-                        _updateStatus.value = UpdateStatus.UpdateAvailable(
-                            updateInfo = updateInfo,
-                            currentVersion = BuildConfig.VERSION_NAME
-                        )
+                        // If this version was already dispatched/installed, avoid repetitive install prompts
+                        if (lastHandledVersion == tagName) {
+                            _updateStatus.value = UpdateStatus.UpToDate(
+                                currentVersion = BuildConfig.VERSION_NAME,
+                                lastCheckedTime = System.currentTimeMillis()
+                            )
+                        } else {
+                            val updateInfo = UpdateInfo(
+                                versionName = tagName,
+                                versionCode = BuildConfig.VERSION_CODE + 1,
+                                releaseTitle = releaseName,
+                                releaseNotes = releaseBody,
+                                apkDownloadUrl = apkUrl.ifEmpty { "https://github.com/$githubRepo/releases/download/v$tagName/$apkName" },
+                                apkFileName = apkName,
+                                apkSizeBytes = apkSize,
+                                publishedAt = publishedAt
+                            )
+                            _updateStatus.value = UpdateStatus.UpdateAvailable(
+                                updateInfo = updateInfo,
+                                currentVersion = BuildConfig.VERSION_NAME
+                            )
+                        }
                     } else {
+                        cleanOldApks()
                         _updateStatus.value = UpdateStatus.UpToDate(
                             currentVersion = BuildConfig.VERSION_NAME,
                             lastCheckedTime = System.currentTimeMillis()
@@ -176,6 +205,7 @@ class OtaUpdateManager(private val context: Context) {
      * even before the user's remote GitHub repository is publicly pushed.
      */
     fun simulateLiveReleaseAvailable() {
+        lastHandledVersion = null
         val nextVersion = incrementVersion(BuildConfig.VERSION_NAME)
         val sampleReleaseNotes = """
             🚀 PREP_AiR v$nextVersion Live Update:
@@ -301,12 +331,17 @@ class OtaUpdateManager(private val context: Context) {
 
     /**
      * Triggers Android Package Installer for the downloaded APK using FileProvider.
+     * Records the version to avoid repeated installation prompts.
      */
-    fun installApk(apkFile: File) {
+    fun installApk(apkFile: File, updateInfo: UpdateInfo? = null) {
         if (!apkFile.exists()) {
             _updateStatus.value = UpdateStatus.Error("APK file not found on disk", BuildConfig.VERSION_NAME)
             return
         }
+
+        val targetVersion = updateInfo?.versionName
+            ?: apkFile.nameWithoutExtension.substringAfterLast("-", "v${BuildConfig.VERSION_NAME}")
+        lastHandledVersion = targetVersion
 
         // On Android 8.0+ check unknown sources permission
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -334,12 +369,32 @@ class OtaUpdateManager(private val context: Context) {
             }
 
             context.startActivity(installIntent)
+
+            // Mark as installing so user is never prompted repeatedly for the same installation
+            _updateStatus.value = UpdateStatus.Installing(version = targetVersion)
+
+            // Clean up old temporary APK files
+            cleanOldApks(keepFile = apkFile)
         } catch (e: Exception) {
             _updateStatus.value = UpdateStatus.Error(
                 "Unable to start installation: ${e.localizedMessage}",
                 BuildConfig.VERSION_NAME
             )
         }
+    }
+
+    /**
+     * Deletes previous downloaded APK files to save disk space and prevent redundant installs.
+     */
+    fun cleanOldApks(keepFile: File? = null) {
+        try {
+            val downloadDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.cacheDir
+            downloadDir.listFiles()?.forEach { file ->
+                if (file.name.endsWith(".apk", ignoreCase = true) && (keepFile == null || file.absolutePath != keepFile.absolutePath)) {
+                    file.delete()
+                }
+            }
+        } catch (_: Exception) {}
     }
 
     fun dismissUpdate() {

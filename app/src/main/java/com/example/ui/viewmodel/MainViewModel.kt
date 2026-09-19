@@ -313,8 +313,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun installApk(apkFile: File) {
-        otaUpdateManager.installApk(apkFile)
+    fun installApk(apkFile: File, updateInfo: UpdateInfo? = null) {
+        clearPostponedUpdate()
+        otaUpdateManager.installApk(apkFile, updateInfo)
     }
 
     fun dismissUpdate() {
