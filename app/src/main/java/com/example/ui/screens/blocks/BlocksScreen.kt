@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,6 +63,9 @@ import com.example.ui.theme.PrepSurfaceVariant
 import com.example.ui.theme.PrepTextMuted
 import com.example.ui.theme.PrepTextPrimary
 import com.example.ui.theme.PrepTextSecondary
+import com.example.ui.theme.PrepThemeState
+import com.example.ui.theme.threeDCard
+import com.example.ui.theme.threeDWell
 
 @Composable
 fun BlocksScreen(
@@ -105,18 +109,19 @@ fun BlocksScreen(
                 )
             }
 
-            Button(
-                onClick = { showAddLimitDialog = true },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PrepGreenBright,
-                    contentColor = Color.Black
-                ),
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+            Box(
+                modifier = Modifier
+                    .shadow(3.dp, RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(PrepGreenBright)
+                    .clickable { showAddLimitDialog = true }
+                    .padding(horizontal = 12.dp, vertical = 7.dp)
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(14.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(text = "Add Limit", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add", tint = Color.Black, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "Add Limit", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                }
             }
         }
 
@@ -139,10 +144,8 @@ fun BlocksScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(PrepSurfaceCard)
-                        .border(1.dp, PrepCardBorder, RoundedCornerShape(14.dp))
-                        .padding(14.dp)
+                        .threeDCard(RoundedCornerShape(16.dp))
+                        .padding(16.dp)
                 ) {
                     // Block Shorts & Reels
                     ShieldToggleRow(
@@ -306,13 +309,7 @@ fun AppLimitCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(PrepSurfaceCard)
-            .border(
-                1.dp,
-                if (isNearExhausted) PrepRedAlert.copy(alpha = 0.4f) else PrepCardBorder,
-                RoundedCornerShape(14.dp)
-            )
+            .threeDCard(RoundedCornerShape(14.dp))
             .padding(14.dp)
     ) {
         Column {
@@ -322,7 +319,21 @@ fun AppLimitCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = limit.iconEmoji, fontSize = 22.sp)
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .shadow(1.5.dp, RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (PrepThemeState.isLight3D) Color(0xFFF0FDF4) else PrepGreenDark)
+                            .border(
+                                1.dp,
+                                if (PrepThemeState.isLight3D) Color(0xFFDCFCE7) else PrepGreenBright.copy(alpha = 0.3f),
+                                RoundedCornerShape(10.dp)
+                            )
+                    ) {
+                        Text(text = limit.iconEmoji, fontSize = 20.sp)
+                    }
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
@@ -343,7 +354,9 @@ fun AppLimitCard(
                     if (limit.isBlockedShorts) {
                         Box(
                             modifier = Modifier
-                                .background(PrepRedAlert.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                                .shadow(1.dp, RoundedCornerShape(6.dp))
+                                .background(PrepRedAlert.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                .border(1.dp, PrepRedAlert.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
@@ -356,7 +369,7 @@ fun AppLimitCard(
                     }
                     IconButton(
                         onClick = onDelete,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(30.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,

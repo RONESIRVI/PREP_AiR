@@ -44,12 +44,14 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Grant Execute Permission to Gradlew
+      - name: Ensure Gradle Wrapper Executable
         run: |
+          if [ ! -f "./gradlew" ]; then
+            echo "Generating Gradle wrapper..."
+            gradle wrapper || true
+          fi
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
-          else
-            echo "gradlew not found, will use system gradle"
           fi
 
       - name: Decode Release Keystore (Optional)

@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +57,9 @@ import com.example.ui.theme.PrepSurfaceVariant
 import com.example.ui.theme.PrepTextMuted
 import com.example.ui.theme.PrepTextPrimary
 import com.example.ui.theme.PrepTextSecondary
+import com.example.ui.theme.PrepThemeState
+import com.example.ui.theme.threeDCard
+import com.example.ui.theme.threeDWell
 
 data class LeaderboardMember(
     val rank: Int,
@@ -111,43 +115,46 @@ fun GroupsScreen(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = { showJoinDialog = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PrepSurfaceCard,
-                        contentColor = PrepGreenBright
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                Box(
+                    modifier = Modifier
+                        .shadow(2.dp, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(PrepSurfaceCard)
+                        .border(1.dp, PrepCardBorder, RoundedCornerShape(8.dp))
+                        .clickable { showJoinDialog = true }
+                        .padding(horizontal = 12.dp, vertical = 7.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.QrCode, contentDescription = "Join", modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Join", fontSize = 12.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.QrCode, contentDescription = "Join", tint = PrepGreenBright, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "Join", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrepTextPrimary)
+                    }
                 }
 
-                Button(
-                    onClick = { showCreateDialog = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PrepGreenBright,
-                        contentColor = Color.Black
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                Box(
+                    modifier = Modifier
+                        .shadow(3.dp, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(PrepGreenBright)
+                        .clickable { showCreateDialog = true }
+                        .padding(horizontal = 12.dp, vertical = 7.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Create", modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "New", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Create", tint = Color.Black, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "New", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                    }
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Sub-tabs (Leaderboard vs My Groups)
+        // Sub-tabs (Leaderboard vs My Groups) in a 3D tactile well
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(PrepSurfaceCard, RoundedCornerShape(12.dp))
+                .threeDWell(RoundedCornerShape(12.dp))
                 .padding(4.dp)
         ) {
             listOf("Group Leaderboard", "Active Squads").forEachIndexed { index, title ->
@@ -156,8 +163,25 @@ fun GroupsScreen(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) PrepGreenDark else Color.Transparent)
+                        .then(
+                            if (isSelected) {
+                                Modifier
+                                    .shadow(2.dp, RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (PrepThemeState.isLight3D) Color.White else PrepGreenDark
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (PrepThemeState.isLight3D) Color(0xFF10B981) else PrepGreenBright,
+                                        RoundedCornerShape(8.dp)
+                                    )
+                            } else {
+                                Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color.Transparent)
+                            }
+                        )
                         .clickable { selectedTab = index }
                         .padding(vertical = 8.dp)
                 ) {
@@ -165,7 +189,9 @@ fun GroupsScreen(
                         text = title,
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) PrepGreenBright else PrepTextMuted
+                        color = if (isSelected) {
+                            if (PrepThemeState.isLight3D) Color(0xFF047857) else PrepGreenBright
+                        } else PrepTextMuted
                     )
                 }
             }
@@ -185,9 +211,7 @@ fun GroupsScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFF1F2B1A))
-                            .border(1.dp, PrepGoldPro.copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+                            .threeDCard(RoundedCornerShape(16.dp))
                             .padding(16.dp)
                     ) {
                         Row(
@@ -200,7 +224,9 @@ fun GroupsScreen(
                                     contentAlignment = Alignment.Center,
                                     modifier = Modifier
                                         .size(44.dp)
+                                        .shadow(2.dp, CircleShape)
                                         .background(PrepGoldPro.copy(alpha = 0.2f), CircleShape)
+                                        .border(1.dp, PrepGoldPro.copy(alpha = 0.5f), CircleShape)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.EmojiEvents,
@@ -262,9 +288,7 @@ fun GroupsScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(PrepSurfaceCard)
-                            .border(1.dp, PrepCardBorder, RoundedCornerShape(12.dp))
+                            .threeDCard(RoundedCornerShape(12.dp))
                             .padding(12.dp)
                     ) {
                         Row(
@@ -317,9 +341,7 @@ fun GroupsScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(PrepSurfaceCard)
-                            .border(1.dp, PrepCardBorder, RoundedCornerShape(14.dp))
+                            .threeDCard(RoundedCornerShape(14.dp))
                             .padding(14.dp)
                     ) {
                         Column {

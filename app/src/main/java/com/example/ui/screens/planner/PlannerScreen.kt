@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,6 +62,9 @@ import com.example.ui.theme.PrepSurfaceVariant
 import com.example.ui.theme.PrepTextMuted
 import com.example.ui.theme.PrepTextPrimary
 import com.example.ui.theme.PrepTextSecondary
+import com.example.ui.theme.PrepThemeState
+import com.example.ui.theme.threeDCard
+import com.example.ui.theme.threeDWell
 
 @Composable
 fun PlannerScreen(
@@ -103,14 +107,21 @@ fun PlannerScreen(
 
                 Box(
                     modifier = Modifier
-                        .background(PrepGreenDark, RoundedCornerShape(8.dp))
+                        .shadow(2.dp, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (PrepThemeState.isLight3D) Color(0xFFD1FAE5) else PrepGreenDark)
+                        .border(
+                            1.dp,
+                            if (PrepThemeState.isLight3D) Color(0xFFA7F3D0) else PrepGreenBright.copy(alpha = 0.5f),
+                            RoundedCornerShape(8.dp)
+                        )
                         .padding(horizontal = 10.dp, vertical = 5.dp)
                 ) {
                     Text(
                         text = "${schedules.count { it.isEnabled }} ACTIVE",
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrepGreenBright
+                        fontWeight = FontWeight.Black,
+                        color = if (PrepThemeState.isLight3D) Color(0xFF047857) else PrepGreenBright
                     )
                 }
             }
@@ -140,8 +151,7 @@ fun PlannerScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
-                        .background(PrepSurfaceCard, RoundedCornerShape(14.dp))
-                        .border(1.dp, PrepCardBorder, RoundedCornerShape(14.dp))
+                        .threeDCard(RoundedCornerShape(16.dp))
                         .padding(20.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -179,7 +189,7 @@ fun PlannerScreen(
             }
         }
 
-        // Add Floating Action Button
+        // Add Floating Action Button with 3D tactile elevation
         FloatingActionButton(
             onClick = { showAddDialog = true },
             containerColor = PrepGreenBright,
@@ -188,6 +198,7 @@ fun PlannerScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(20.dp)
+                .shadow(6.dp, CircleShape, spotColor = PrepGreenBright.copy(alpha = 0.6f))
         ) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "Add Schedule")
         }
@@ -215,13 +226,7 @@ fun ScheduleCardItem(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(PrepSurfaceCard)
-            .border(
-                1.dp,
-                if (schedule.isEnabled) PrepGreenBright.copy(alpha = 0.4f) else PrepCardBorder,
-                RoundedCornerShape(14.dp)
-            )
+            .threeDCard(RoundedCornerShape(14.dp))
             .padding(14.dp)
     ) {
         Column {
@@ -231,7 +236,23 @@ fun ScheduleCardItem(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = schedule.icon, fontSize = 22.sp)
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .shadow(2.dp, RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (PrepThemeState.isLight3D) Color(0xFFF0FDF4) else PrepGreenDark
+                            )
+                            .border(
+                                1.dp,
+                                if (PrepThemeState.isLight3D) Color(0xFFDCFCE7) else PrepGreenBright.copy(alpha = 0.3f),
+                                RoundedCornerShape(10.dp)
+                            )
+                    ) {
+                        Text(text = schedule.icon, fontSize = 20.sp)
+                    }
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
@@ -262,7 +283,7 @@ fun ScheduleCardItem(
                     checked = schedule.isEnabled,
                     onCheckedChange = { onToggle() },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.Black,
+                        checkedThumbColor = Color.White,
                         checkedTrackColor = PrepGreenBright,
                         uncheckedTrackColor = PrepSurfaceVariant
                     )
@@ -279,14 +300,17 @@ fun ScheduleCardItem(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .background(PrepSurfaceVariant, RoundedCornerShape(6.dp))
+                            .shadow(1.dp, RoundedCornerShape(6.dp))
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(PrepSurfaceVariant)
+                            .border(1.dp, PrepCardBorder, RoundedCornerShape(6.dp))
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
                             text = schedule.tag,
                             fontSize = 10.sp,
                             color = PrepTextSecondary,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -300,7 +324,7 @@ fun ScheduleCardItem(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = onDelete,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
@@ -312,16 +336,24 @@ fun ScheduleCardItem(
                     Spacer(modifier = Modifier.width(6.dp))
                     Box(
                         modifier = Modifier
+                            .shadow(2.dp, RoundedCornerShape(8.dp))
                             .clip(RoundedCornerShape(8.dp))
-                            .background(PrepGreenDark)
+                            .background(
+                                if (PrepThemeState.isLight3D) Color(0xFFD1FAE5) else PrepGreenDark
+                            )
+                            .border(
+                                1.dp,
+                                if (PrepThemeState.isLight3D) Color(0xFFA7F3D0) else PrepGreenBright.copy(alpha = 0.5f),
+                                RoundedCornerShape(8.dp)
+                            )
                             .clickable { onStart() }
-                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
                             text = "START",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = PrepGreenBright
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (PrepThemeState.isLight3D) Color(0xFF047857) else PrepGreenBright
                         )
                     }
                 }

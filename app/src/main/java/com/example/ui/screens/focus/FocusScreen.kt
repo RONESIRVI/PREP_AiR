@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -57,6 +58,11 @@ import com.example.ui.theme.PrepSurfaceVariant
 import com.example.ui.theme.PrepTextMuted
 import com.example.ui.theme.PrepTextPrimary
 import com.example.ui.theme.PrepTextSecondary
+import com.example.ui.theme.PrepThemeState
+import com.example.ui.theme.Tactile3DButton
+import com.example.ui.theme.Tactile3DChip
+import com.example.ui.theme.threeDCard
+import com.example.ui.theme.threeDWell
 
 enum class FocusMode(val title: String, val defaultMinutes: Int) {
     TIMER("Focus Timer", 45),
@@ -104,13 +110,12 @@ fun FocusScreen(
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp, vertical = 8.dp)
     ) {
-        // Mode Selector Bar (Timer / Stopwatch / Pomodoro)
+        // 3D Mode Selector Bar (Timer / Stopwatch / Pomodoro)
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(PrepSurfaceCard, RoundedCornerShape(16.dp))
-                .border(1.dp, PrepCardBorder, RoundedCornerShape(16.dp))
+                .threeDWell(RoundedCornerShape(16.dp))
                 .padding(4.dp)
         ) {
             FocusMode.values().forEach { mode ->
@@ -119,8 +124,23 @@ fun FocusScreen(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) PrepGreenDark else Color.Transparent)
+                        .then(
+                            if (isSelected) {
+                                Modifier
+                                    .shadow(2.dp, RoundedCornerShape(12.dp))
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (PrepThemeState.isLight3D) Color.White else PrepGreenDark)
+                                    .border(
+                                        1.dp,
+                                        if (PrepThemeState.isLight3D) Color(0xFFD4E2D8) else PrepGreenBright,
+                                        RoundedCornerShape(12.dp)
+                                    )
+                            } else {
+                                Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.Transparent)
+                            }
+                        )
                         .clickable { onModeChange(mode) }
                         .padding(vertical = 10.dp)
                 ) {
@@ -147,7 +167,7 @@ fun FocusScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // Preset Duration Selector (15m, 25m, 45m, 60m, 90m) if not Stopwatch
+        // 3D Preset Duration Selector (15m, 25m, 45m, 60m, 90m) if not Stopwatch
         if (currentMode != FocusMode.STOPWATCH) {
             val presets = listOf(15, 25, 45, 60, 90)
             LazyRow(
@@ -156,32 +176,17 @@ fun FocusScreen(
             ) {
                 items(presets) { minutes ->
                     val isSelected = initialDurationSeconds == minutes * 60
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (isSelected) PrepGreenDark else PrepSurfaceCard)
-                            .border(
-                                1.dp,
-                                if (isSelected) PrepGreenBright else PrepCardBorder,
-                                RoundedCornerShape(10.dp)
-                            )
-                            .clickable { onPresetDurationSelected(minutes) }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = "${minutes}m",
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) PrepGreenBright else PrepTextPrimary
-                        )
-                    }
+                    Tactile3DChip(
+                        text = "${minutes}m",
+                        isSelected = isSelected,
+                        onClick = { onPresetDurationSelected(minutes) }
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        // Primary Start/Pause & Reset Action Controls
+        // Primary 3D Start/Pause & Reset Action Controls
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
@@ -191,54 +196,34 @@ fun FocusScreen(
                 IconButton(
                     onClick = onResetTimer,
                     modifier = Modifier
-                        .size(52.dp)
-                        .background(PrepSurfaceCard, CircleShape)
-                        .border(1.dp, PrepCardBorder, CircleShape)
+                        .size(54.dp)
+                        .threeDCard(CircleShape, elevation = 3.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = "Reset",
-                        tint = PrepTextMuted
+                        tint = PrepTextSecondary
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
             }
 
-            Button(
+            Tactile3DButton(
                 onClick = onStartPauseToggle,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isRunning) PrepGoldPro else PrepGreenBright,
-                    contentColor = Color.Black
-                ),
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(54.dp)
-            ) {
-                Icon(
-                    imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isRunning) "Pause" else "Start",
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = if (isRunning) "PAUSE SESSION" else "START FOCUS",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
-                )
-            }
+                text = if (isRunning) "PAUSE SESSION" else "START FOCUS",
+                icon = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                isAccentGold = isRunning,
+                modifier = Modifier.weight(1f)
+            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Focus Music Bar / Audio Pill
+        // Focus Music Bar / 3D Audio Pill
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(PrepSurfaceCard)
-                .border(1.dp, PrepCardBorder, RoundedCornerShape(14.dp))
+                .threeDCard(RoundedCornerShape(14.dp))
                 .clickable { onOpenAudioPlayer() }
                 .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
@@ -250,9 +235,15 @@ fun FocusScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
+                            .shadow(2.dp, CircleShape)
+                            .clip(CircleShape)
                             .background(
-                                if (isAudioPlaying) PrepGreenDark else PrepSurfaceVariant,
+                                if (isAudioPlaying) PrepGreenDark else PrepSurfaceVariant
+                            )
+                            .border(
+                                1.dp,
+                                if (isAudioPlaying) PrepGreenBright else PrepCardBorder,
                                 CircleShape
                             ),
                         contentAlignment = Alignment.Center
@@ -282,13 +273,16 @@ fun FocusScreen(
 
                 Box(
                     modifier = Modifier
-                        .background(PrepGoldPro.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .shadow(1.dp, RoundedCornerShape(6.dp))
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(PrepGoldPro.copy(alpha = 0.2f))
+                        .border(1.dp, PrepGoldPro.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = "PRO",
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Black,
                         color = PrepGoldPro
                     )
                 }
@@ -297,17 +291,11 @@ fun FocusScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Deep Focus Mode Toggle Card
+        // 3D Deep Focus Mode Toggle Card
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(if (deepFocusEnabled) Color(0xFF1B2313) else PrepSurfaceCard)
-                .border(
-                    1.dp,
-                    if (deepFocusEnabled) PrepGreenBright else PrepCardBorder,
-                    RoundedCornerShape(14.dp)
-                )
+                .threeDCard(RoundedCornerShape(14.dp))
                 .padding(14.dp)
         ) {
             Row(
@@ -319,12 +307,21 @@ fun FocusScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        imageVector = if (deepFocusEnabled) Icons.Default.Lock else Icons.Default.Security,
-                        contentDescription = "Deep Focus",
-                        tint = if (deepFocusEnabled) PrepGreenBright else PrepTextMuted,
-                        modifier = Modifier.size(22.dp)
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .shadow(2.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(if (deepFocusEnabled) PrepGreenDark else PrepSurfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = if (deepFocusEnabled) Icons.Default.Lock else Icons.Default.Security,
+                            contentDescription = "Deep Focus",
+                            tint = if (deepFocusEnabled) PrepGreenBright else PrepTextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
@@ -345,7 +342,7 @@ fun FocusScreen(
                     checked = deepFocusEnabled,
                     onCheckedChange = onDeepFocusToggled,
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.Black,
+                        checkedThumbColor = Color.White,
                         checkedTrackColor = PrepGreenBright,
                         uncheckedTrackColor = PrepSurfaceVariant
                     )
@@ -360,13 +357,11 @@ fun FocusScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Screen Time vs Focus Time Stats Card (Blueprint Section 2)
+        // 3D Screen Time vs Focus Time Stats Card (Blueprint Section 2)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(PrepSurfaceCard)
-                .border(1.dp, PrepCardBorder, RoundedCornerShape(14.dp))
+                .threeDCard(RoundedCornerShape(14.dp))
                 .padding(16.dp)
         ) {
             Column {
@@ -474,9 +469,7 @@ fun WeeklyConsistencyRibbon() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(PrepSurfaceCard)
-            .border(1.dp, PrepCardBorder, RoundedCornerShape(14.dp))
+            .threeDCard(RoundedCornerShape(14.dp))
             .padding(14.dp)
     ) {
         Column {
@@ -518,12 +511,17 @@ fun WeeklyConsistencyRibbon() {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(34.dp)
+                                .shadow(
+                                    elevation = if (isToday) 3.dp else 1.dp,
+                                    shape = CircleShape,
+                                    spotColor = if (isToday) PrepGreenBright.copy(alpha = 0.5f) else Color(0x20000000)
+                                )
                                 .clip(CircleShape)
                                 .background(
                                     when {
                                         isToday -> PrepGreenDark
-                                        isDone -> PrepGreenBright.copy(alpha = 0.2f)
+                                        isDone -> if (PrepThemeState.isLight3D) Color(0xFFD1FAE5) else PrepGreenBright.copy(alpha = 0.2f)
                                         else -> PrepSurfaceVariant
                                     }
                                 )
@@ -531,7 +529,7 @@ fun WeeklyConsistencyRibbon() {
                                     1.dp,
                                     when {
                                         isToday -> PrepGreenBright
-                                        isDone -> PrepGreenBright.copy(alpha = 0.5f)
+                                        isDone -> if (PrepThemeState.isLight3D) Color(0xFFA7F3D0) else PrepGreenBright.copy(alpha = 0.5f)
                                         else -> PrepCardBorder
                                     },
                                     CircleShape
@@ -541,7 +539,7 @@ fun WeeklyConsistencyRibbon() {
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    tint = if (isToday) PrepGreenBright else PrepGreenBright.copy(alpha = 0.8f),
+                                    tint = if (isToday) PrepGreenBright else if (PrepThemeState.isLight3D) Color(0xFF047857) else PrepGreenBright.copy(alpha = 0.8f),
                                     modifier = Modifier.size(16.dp)
                                 )
                             } else {

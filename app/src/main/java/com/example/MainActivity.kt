@@ -30,6 +30,8 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HourglassBottom
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Icon
@@ -48,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -74,6 +77,8 @@ import com.example.ui.theme.PrepSurface
 import com.example.ui.theme.PrepSurfaceCard
 import com.example.ui.theme.PrepTextMuted
 import com.example.ui.theme.PrepTextPrimary
+import com.example.ui.theme.PrepThemeState
+import com.example.ui.theme.threeDCard
 import com.example.ui.viewmodel.MainViewModel
 
 enum class MainTab(val title: String, val icon: ImageVector) {
@@ -175,8 +180,28 @@ fun PrepAirApp(viewModel: MainViewModel) {
                     // Top Action Icons
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+                        // 3D Theme Mode Switcher (Light 3D vs Deep Focus Dark)
+                        IconButton(
+                            onClick = {
+                                PrepThemeState.isLight3D = !PrepThemeState.isLight3D
+                            },
+                            modifier = Modifier
+                                .size(34.dp)
+                                .shadow(2.dp, CircleShape)
+                                .background(PrepSurfaceCard, CircleShape)
+                                .border(1.dp, PrepCardBorder, CircleShape)
+                                .testTag("theme_toggle_button")
+                        ) {
+                            Icon(
+                                imageVector = if (PrepThemeState.isLight3D) Icons.Default.DarkMode else Icons.Default.LightMode,
+                                contentDescription = if (PrepThemeState.isLight3D) "Switch to Dark Mode" else "Switch to Light 3D Mode",
+                                tint = if (PrepThemeState.isLight3D) Color(0xFF6366F1) else Color(0xFFFBBF24),
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
+
                         // OTA Version Badge & Status Indicator (Pulsing gold if update ready)
                         val hasUpdate = otaStatus is UpdateStatus.UpdateAvailable ||
                                 otaStatus is UpdateStatus.ReadyToInstall ||
@@ -184,6 +209,7 @@ fun PrepAirApp(viewModel: MainViewModel) {
 
                         Box(
                             modifier = Modifier
+                                .shadow(2.dp, RoundedCornerShape(20.dp))
                                 .clip(RoundedCornerShape(20.dp))
                                 .background(if (hasUpdate) PrepGoldPro.copy(alpha = 0.2f) else PrepSurfaceCard)
                                 .border(
@@ -192,7 +218,7 @@ fun PrepAirApp(viewModel: MainViewModel) {
                                     RoundedCornerShape(20.dp)
                                 )
                                 .clickable { showOtaSheet = true }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .padding(horizontal = 9.dp, vertical = 5.dp)
                                 .testTag("ota_update_chip")
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -204,7 +230,7 @@ fun PrepAirApp(viewModel: MainViewModel) {
                                             CircleShape
                                         )
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(5.dp))
                                 Text(
                                     text = if (hasUpdate) "OTA UPDATE" else "v${BuildConfig.VERSION_NAME}",
                                     fontSize = 11.sp,
@@ -219,7 +245,8 @@ fun PrepAirApp(viewModel: MainViewModel) {
                         IconButton(
                             onClick = { showMusicSheet = true },
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(34.dp)
+                                .shadow(2.dp, CircleShape)
                                 .background(
                                     if (isAudioPlaying) PrepGreenDark else PrepSurfaceCard,
                                     CircleShape
@@ -231,7 +258,7 @@ fun PrepAirApp(viewModel: MainViewModel) {
                                 imageVector = Icons.Default.GraphicEq,
                                 contentDescription = "Focus Music",
                                 tint = if (isAudioPlaying) PrepGreenBright else PrepTextMuted,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(17.dp)
                             )
                         }
 
@@ -239,7 +266,8 @@ fun PrepAirApp(viewModel: MainViewModel) {
                         IconButton(
                             onClick = { showSettingsSheet = true },
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(34.dp)
+                                .shadow(2.dp, CircleShape)
                                 .background(PrepSurfaceCard, CircleShape)
                                 .border(1.dp, PrepCardBorder, CircleShape)
                                 .testTag("settings_sheet_button")
@@ -248,21 +276,22 @@ fun PrepAirApp(viewModel: MainViewModel) {
                                 imageVector = Icons.Default.Settings,
                                 contentDescription = "Settings & CI/CD Hub",
                                 tint = PrepTextPrimary,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(17.dp)
                             )
                         }
 
                         // PRO Badge
                         Box(
                             modifier = Modifier
+                                .shadow(2.dp, RoundedCornerShape(8.dp))
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(PrepGoldPro.copy(alpha = 0.15f))
                                 .border(1.dp, PrepGoldPro.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 5.dp)
+                                .padding(horizontal = 7.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = "PRO",
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Black,
                                 color = PrepGoldPro
                             )
