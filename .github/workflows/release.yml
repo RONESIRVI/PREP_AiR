@@ -85,6 +85,7 @@ jobs:
 
       - name: Build Android APK
         env:
+          JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
           KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -92,9 +93,9 @@ jobs:
           # Try building release APK; if signing key is not provided in secrets,
           # build debug APK so a working signed APK is always generated and ready for installation!
           if [ -f "./gradlew" ]; then
-            ./gradlew assembleRelease || ./gradlew assembleDebug
+            ./gradlew assembleRelease --no-daemon --stacktrace || ./gradlew assembleDebug --no-daemon --stacktrace
           else
-            gradle assembleRelease || gradle assembleDebug
+            gradle assembleRelease --no-daemon --stacktrace || gradle assembleDebug --no-daemon --stacktrace
           fi
 
       - name: Prepare Release APK Asset
