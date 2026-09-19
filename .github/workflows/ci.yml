@@ -10,6 +10,8 @@ jobs:
   build:
     name: Test & Build APK
     runs-on: ubuntu-latest
+    env:
+      JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
 
     steps:
       - name: Checkout Code
