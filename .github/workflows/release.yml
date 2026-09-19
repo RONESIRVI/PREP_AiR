@@ -62,9 +62,23 @@ jobs:
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
             echo "Found KEYSTORE_BASE64 secret, decoding to my-upload-key.jks..."
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-upload-key.jks
-          elif [ -f "debug.keystore.base64" ]; then
+          fi
+          if [ -f "debug.keystore.base64" ]; then
             echo "Decoding bundled debug.keystore.base64..."
             base64 --decode debug.keystore.base64 > debug.keystore || true
+          fi
+          if [ ! -f "debug.keystore" ]; then
+            echo "Generating fallback debug.keystore..."
+            keytool -genkeypair \
+              -v \
+              -keystore debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
           fi
 
       - name: Determine Version Tag
