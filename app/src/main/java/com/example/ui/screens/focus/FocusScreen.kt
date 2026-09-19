@@ -24,17 +24,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -286,67 +282,6 @@ fun FocusScreen(
                         color = PrepGoldPro
                     )
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // 3D Deep Focus Mode Toggle Card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .threeDCard(RoundedCornerShape(14.dp))
-                .padding(14.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .shadow(2.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(if (deepFocusEnabled) PrepGreenDark else PrepSurfaceVariant)
-                    ) {
-                        Icon(
-                            imageVector = if (deepFocusEnabled) Icons.Default.Lock else Icons.Default.Security,
-                            contentDescription = "Deep Focus",
-                            tint = if (deepFocusEnabled) PrepGreenBright else PrepTextMuted,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Deep Focus Shield",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = PrepTextPrimary
-                        )
-                        Text(
-                            text = if (deepFocusEnabled) "Interruption shield locked • Strictly anti-distraction" else "Prevent exiting focus & mute distracting alerts",
-                            fontSize = 11.sp,
-                            color = if (deepFocusEnabled) PrepGreenBright else PrepTextMuted
-                        )
-                    }
-                }
-
-                Switch(
-                    checked = deepFocusEnabled,
-                    onCheckedChange = onDeepFocusToggled,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = PrepGreenBright,
-                        uncheckedTrackColor = PrepSurfaceVariant
-                    )
-                )
             }
         }
 

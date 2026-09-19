@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,8 +15,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -25,20 +22,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AppBlocking
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.HourglassBottom
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,41 +41,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.ota.UpdateStatus
-import com.example.ui.components.FocusMusicPlayerSheet
 import com.example.ui.components.OtaFloatingBanner
 import com.example.ui.components.OtaUpdateCenterSheet
 import com.example.ui.components.SettingsPreferencesSheet
-import com.example.ui.screens.blocks.BlocksScreen
-import com.example.ui.screens.focus.FocusScreen
-import com.example.ui.screens.groups.GroupsScreen
-import com.example.ui.screens.planner.PlannerScreen
+import com.example.ui.screens.welcome.WelcomeScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.PrepBackground
 import com.example.ui.theme.PrepCardBorder
 import com.example.ui.theme.PrepGoldPro
 import com.example.ui.theme.PrepGreenBright
 import com.example.ui.theme.PrepGreenDark
-import com.example.ui.theme.PrepSurface
 import com.example.ui.theme.PrepSurfaceCard
 import com.example.ui.theme.PrepTextMuted
 import com.example.ui.theme.PrepTextPrimary
 import com.example.ui.theme.PrepThemeState
-import com.example.ui.theme.threeDCard
 import com.example.ui.viewmodel.MainViewModel
-
-enum class MainTab(val title: String, val icon: ImageVector) {
-    FOCUS("Focus", Icons.Default.HourglassBottom),
-    PLANNER("Planner", Icons.Default.CalendarMonth),
-    GROUPS("Groups", Icons.Default.Groups),
-    BLOCKS("Blocks", Icons.Default.AppBlocking)
-}
 
 class MainActivity : ComponentActivity() {
 
@@ -105,34 +80,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PrepAirApp(viewModel: MainViewModel) {
-    var currentTab by remember { mutableStateOf(MainTab.FOCUS) }
-    var selectedPlannerDayIndex by remember { mutableStateOf(4) } // Today Friday
-    var showMusicSheet by remember { mutableStateOf(false) }
     var showOtaSheet by remember { mutableStateOf(false) }
     var showSettingsSheet by remember { mutableStateOf(false) }
 
-    // Collect Viewmodel States
+    // Collect Viewmodel States for In-App OTA Update System
     val otaStatus by viewModel.otaStatus.collectAsState()
-    val focusMode by viewModel.focusMode.collectAsState()
-    val secondsRemaining by viewModel.secondsRemaining.collectAsState()
-    val initialDurationSeconds by viewModel.initialDurationSeconds.collectAsState()
-    val isTimerRunning by viewModel.isTimerRunning.collectAsState()
-    val deepFocusEnabled by viewModel.deepFocusEnabled.collectAsState()
-    val todayFocusMinutes by viewModel.todayFocusMinutes.collectAsState()
-    val todayScreenTimeMinutes by viewModel.todayScreenTimeMinutes.collectAsState()
-
-    val activeAudioTrackId by viewModel.activeAudioTrackId.collectAsState()
-    val isAudioPlaying by viewModel.isAudioPlaying.collectAsState()
-    val audioVolume by viewModel.audioVolume.collectAsState()
-
-    val schedules by viewModel.schedules.collectAsState()
-    val appLimits by viewModel.appLimits.collectAsState()
-    val groups by viewModel.groups.collectAsState()
-
-    val blockShortsEnabled by viewModel.blockShortsEnabled.collectAsState()
-    val strictModeEnabled by viewModel.strictModeEnabled.collectAsState()
-    val uninstallProtectionEnabled by viewModel.uninstallProtectionEnabled.collectAsState()
-    val websiteBlockerEnabled by viewModel.websiteBlockerEnabled.collectAsState()
 
     Scaffold(
         topBar = {
@@ -180,9 +132,9 @@ fun PrepAirApp(viewModel: MainViewModel) {
                     // Top Action Icons
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // 3D Theme Mode Switcher (Light 3D vs Deep Focus Dark)
+                        // 3D Theme Mode Switcher (Light 3D vs Dark)
                         IconButton(
                             onClick = {
                                 PrepThemeState.isLight3D = !PrepThemeState.isLight3D
@@ -241,27 +193,6 @@ fun PrepAirApp(viewModel: MainViewModel) {
                             }
                         }
 
-                        // Audio Player Icon Button
-                        IconButton(
-                            onClick = { showMusicSheet = true },
-                            modifier = Modifier
-                                .size(34.dp)
-                                .shadow(2.dp, CircleShape)
-                                .background(
-                                    if (isAudioPlaying) PrepGreenDark else PrepSurfaceCard,
-                                    CircleShape
-                                )
-                                .border(1.dp, PrepCardBorder, CircleShape)
-                                .testTag("music_sheet_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.GraphicEq,
-                                contentDescription = "Focus Music",
-                                tint = if (isAudioPlaying) PrepGreenBright else PrepTextMuted,
-                                modifier = Modifier.size(17.dp)
-                            )
-                        }
-
                         // Settings & CI/CD Hub Button
                         IconButton(
                             onClick = { showSettingsSheet = true },
@@ -279,27 +210,10 @@ fun PrepAirApp(viewModel: MainViewModel) {
                                 modifier = Modifier.size(17.dp)
                             )
                         }
-
-                        // PRO Badge
-                        Box(
-                            modifier = Modifier
-                                .shadow(2.dp, RoundedCornerShape(8.dp))
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(PrepGoldPro.copy(alpha = 0.15f))
-                                .border(1.dp, PrepGoldPro.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 7.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "PRO",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                color = PrepGoldPro
-                            )
-                        }
                     }
                 }
 
-                // Floating Banner for OTA updates
+                // Floating Banner for OTA updates (Auto-shows when GitHub has a new release)
                 OtaFloatingBanner(
                     status = otaStatus,
                     onOpenUpdateCenter = { showOtaSheet = true },
@@ -307,130 +221,23 @@ fun PrepAirApp(viewModel: MainViewModel) {
                 )
             }
         },
-        bottomBar = {
-            NavigationBar(
-                containerColor = PrepSurface,
-                tonalElevation = 8.dp,
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .border(width = 0.5.dp, color = PrepCardBorder)
-                    .testTag("main_bottom_nav")
-            ) {
-                MainTab.values().forEach { tab ->
-                    val isSelected = currentTab == tab
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = { currentTab = tab },
-                        icon = {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = tab.title
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = tab.title,
-                                fontSize = 11.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color.Black,
-                            selectedTextColor = PrepGreenBright,
-                            indicatorColor = PrepGreenBright,
-                            unselectedIconColor = PrepTextMuted,
-                            unselectedTextColor = PrepTextMuted
-                        )
-                    )
-                }
-            }
-        },
         containerColor = PrepBackground,
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        Box(
+        // Single Dedicated Welcome Screen with CSS Graphics & Integrated OTA System
+        WelcomeScreen(
+            otaStatus = otaStatus,
+            onCheckForUpdates = { viewModel.checkForUpdates() },
+            onOpenOtaSheet = { showOtaSheet = true },
+            onDownloadUpdate = { updateInfo -> viewModel.downloadUpdate(updateInfo) },
+            onInstallApk = { apkFile -> viewModel.installApk(apkFile) },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-        ) {
-            Crossfade(
-                targetState = currentTab,
-                label = "tab_crossfade"
-            ) { tab ->
-                when (tab) {
-                    MainTab.FOCUS -> {
-                        FocusScreen(
-                            currentMode = focusMode,
-                            secondsRemaining = secondsRemaining,
-                            initialDurationSeconds = initialDurationSeconds,
-                            isRunning = isTimerRunning,
-                            deepFocusEnabled = deepFocusEnabled,
-                            todayFocusMinutes = todayFocusMinutes,
-                            todayScreenTimeMinutes = todayScreenTimeMinutes,
-                            activeAudioTrackTitle = activeAudioTrackId,
-                            isAudioPlaying = isAudioPlaying,
-                            onModeChange = { viewModel.setFocusMode(it) },
-                            onStartPauseToggle = { viewModel.toggleStartPause() },
-                            onResetTimer = { viewModel.resetTimer() },
-                            onPresetDurationSelected = { viewModel.setPresetDuration(it) },
-                            onDeepFocusToggled = { viewModel.setDeepFocusEnabled(it) },
-                            onOpenAudioPlayer = { showMusicSheet = true }
-                        )
-                    }
-                    MainTab.PLANNER -> {
-                        PlannerScreen(
-                            schedules = schedules,
-                            selectedDayIndex = selectedPlannerDayIndex,
-                            onDaySelected = { selectedPlannerDayIndex = it },
-                            onToggleSchedule = { viewModel.toggleSchedule(it) },
-                            onAddSchedule = { viewModel.addSchedule(it) },
-                            onDeleteSchedule = { viewModel.deleteSchedule(it) },
-                            onStartSessionForSchedule = {
-                                viewModel.startSessionForSchedule(it)
-                                currentTab = MainTab.FOCUS
-                            }
-                        )
-                    }
-                    MainTab.GROUPS -> {
-                        GroupsScreen(
-                            groups = groups,
-                            onJoinGroupWithCode = { viewModel.joinGroup(it) },
-                            onCreateGroup = { viewModel.createGroup(it) }
-                        )
-                    }
-                    MainTab.BLOCKS -> {
-                        BlocksScreen(
-                            appLimits = appLimits,
-                            blockShortsEnabled = blockShortsEnabled,
-                            strictModeEnabled = strictModeEnabled,
-                            uninstallProtectionEnabled = uninstallProtectionEnabled,
-                            websiteBlockerEnabled = websiteBlockerEnabled,
-                            onToggleShorts = { viewModel.setBlockShorts(it) },
-                            onToggleStrictMode = { viewModel.setStrictMode(it) },
-                            onToggleUninstallProtection = { viewModel.setUninstallProtection(it) },
-                            onToggleWebsiteBlocker = { viewModel.setWebsiteBlocker(it) },
-                            onAddAppLimit = { viewModel.addAppLimit(it) },
-                            onDeleteAppLimit = { viewModel.deleteAppLimit(it) }
-                        )
-                    }
-                }
-            }
-        }
+        )
     }
 
-    // Focus Music Player Modal Sheet
-    FocusMusicPlayerSheet(
-        isOpen = showMusicSheet,
-        isPlaying = isAudioPlaying,
-        selectedTrackId = activeAudioTrackId,
-        volume = audioVolume,
-        onTrackSelect = { viewModel.selectAudioTrack(it) },
-        onPlayPauseToggle = { viewModel.toggleAudioPlayPause() },
-        onVolumeChange = { viewModel.setAudioVolume(it) },
-        onDismiss = { showMusicSheet = false }
-    )
-
-    // OTA Auto-Update Center Modal Sheet
+    // OTA Auto-Update Center Modal Sheet (Preserved & Fully Functional)
     OtaUpdateCenterSheet(
         isOpen = showOtaSheet,
         status = otaStatus,
@@ -446,7 +253,7 @@ fun PrepAirApp(viewModel: MainViewModel) {
         onDismiss = { showOtaSheet = false }
     )
 
-    // Settings & CI/CD Hub Modal Sheet
+    // Settings & CI/CD Hub Modal Sheet (Preserved)
     SettingsPreferencesSheet(
         isOpen = showSettingsSheet,
         currentRepo = viewModel.otaUpdateManager.githubRepo,
