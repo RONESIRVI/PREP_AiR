@@ -1,67 +1,95 @@
 package com.example.ui.theme
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-/**
- * Global Theme Controller for PREP_AiR
- * Defaults to Light 3D-styled design as requested!
- */
-object PrepThemeState {
-    var isLight3D by mutableStateOf(true)
+// Academic Premium Palette: Deep Navy, Gold / Amber, Emerald Accent, Crisp Slate
+val Navy950 = Color(0xFF070C1E) // Deepest academic midnight
+val Navy900 = Color(0xFF0B132B) // Main background
+val Navy800 = Color(0xFF131D3B) // Card surface background
+val Navy700 = Color(0xFF1C2B54) // Raised surface
+val Navy600 = Color(0xFF263A70) // Elevated borders & dividers
+val NavyBorder = Color(0x35F59E0B) // Subtle gold outline on dark
+
+// Gold & Amber Accents (Achievement / Progress / Premium)
+val GoldPrimary = Color(0xFFF59E0B) // Amber-500
+val GoldBright = Color(0xFFFBBF24) // Amber-400
+val GoldDeep = Color(0xFFD97706) // Amber-600
+val GoldMuted = Color(0x28F59E0B) // Gold subtle container
+val GoldGlow = Color(0x40FBBF24)
+
+// Supporting Metrics Colors
+val EmeraldSuccess = Color(0xFF10B981) // High Accuracy / Correct
+val EmeraldGlow = Color(0x2810B981)
+val RoseError = Color(0xFFEF4444) // Wrong Questions / Errors
+val RoseGlow = Color(0x28EF4444)
+val CyanMetric = Color(0xFF06B6D4) // Speed / Time Taken
+val IndigoAccent = Color(0xFF6366F1) // Difficulty / Subjects
+val PurpleAccent = Color(0xFF8B5CF6) // Mistake patterns
+
+// Light Academic Palette
+val AcademicPaperLight = Color(0xFFF8FAFC)
+val AcademicCardLight = Color(0xFFFFFFFF)
+val AcademicBorderLight = Color(0xFFE2E8F0)
+val AcademicTextDark = Color(0xFF0F172A)
+val AcademicTextMuted = Color(0xFF64748B)
+
+// Text Colors
+val TextWhite = Color(0xFFF8FAFC)
+val TextMutedSlate = Color(0xFF94A3B8)
+val TextDim = Color(0xFF64748B)
+
+// Dynamic Palette State
+object TestTrackThemeState {
+    var isLightMode: Boolean = false
 }
 
-// PREP_AiR Dynamic Light 3D / Dark Theme Colors
-val PrepBackground: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFFF1F5F2) else Color(0xFF070B08)
+// Backward compatibility alias for legacy components if accessed
+object PrepThemeState {
+    var isLight3D: Boolean
+        get() = TestTrackThemeState.isLightMode
+        set(value) { TestTrackThemeState.isLightMode = value }
+}
 
-val PrepSurface: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFFFFFFFF) else Color(0xFF101912)
+val AppBackground: Color
+    get() = if (TestTrackThemeState.isLightMode) AcademicPaperLight else Navy900
 
-val PrepSurfaceVariant: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFFE2EBE4) else Color(0xFF17241A)
+val AppCardSurface: Color
+    get() = if (TestTrackThemeState.isLightMode) AcademicCardLight else Navy800
 
-val PrepSurfaceCard: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFFFFFFFF) else Color(0xFF142016)
+val AppCardSurfaceRaised: Color
+    get() = if (TestTrackThemeState.isLightMode) Color(0xFFF1F5F9) else Navy700
 
-val PrepCardBorder: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFFD6E4DA) else Color(0xFF223625)
+val AppCardBorder: Color
+    get() = if (TestTrackThemeState.isLightMode) AcademicBorderLight else Color(0x26F59E0B)
 
-// Brand Vibrant Accents
-val PrepGreenPrimary: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFF10B981) else Color(0xFF4CAF50)
+val AppTextPrimary: Color
+    get() = if (TestTrackThemeState.isLightMode) AcademicTextDark else TextWhite
 
-val PrepGreenBright: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFF059669) else Color(0xFF4CEF8D)
+val AppTextSecondary: Color
+    get() = if (TestTrackThemeState.isLightMode) AcademicTextMuted else TextMutedSlate
 
-val PrepGreenDark: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFFD1FAE5) else Color(0xFF1B5E20)
+// Backward-compatible color aliases for auxiliary components
+val PrepBackground: Color get() = AppBackground
+val PrepSurface: Color get() = AppCardSurface
+val PrepSurfaceCard: Color get() = AppCardSurface
+val PrepSurfaceVariant: Color get() = AppCardSurfaceRaised
+val PrepCardBorder: Color get() = AppCardBorder
+val PrepTextPrimary: Color get() = AppTextPrimary
+val PrepTextSecondary: Color get() = AppTextSecondary
+val PrepTextMuted: Color get() = TextMutedSlate
+val PrepGreenPrimary: Color = GoldPrimary
+val PrepGreenBright: Color = GoldBright
+val PrepGreenDark: Color = Navy800
+val PrepGoldPro: Color = GoldPrimary
+val PrepRedAlert: Color = RoseError
+val PrepBlueAccent: Color = CyanMetric
+val PrepOrangeDistracting: Color = Color(0xFFFB923C)
 
-val PrepGreenGlow: Color
-    get() = if (PrepThemeState.isLight3D) Color(0x3510B981) else Color(0x334CEF8D)
+val GoldGradient = Brush.horizontalGradient(
+    colors = listOf(GoldDeep, GoldPrimary, GoldBright)
+)
 
-val PrepBlueAccent: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFF0284C7) else Color(0xFF38BDF8)
-
-val PrepGoldPro: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFFD97706) else Color(0xFFFBBF24)
-
-val PrepOrangeDistracting: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFFEA580C) else Color(0xFFF97316)
-
-val PrepRedAlert: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFFDC2626) else Color(0xFFEF4444)
-
-// High-contrast clean typography tokens
-val PrepTextPrimary: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFF0F172A) else Color(0xFFF0FDF4)
-
-val PrepTextSecondary: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFF475569) else Color(0xFF94A3B8)
-
-val PrepTextMuted: Color
-    get() = if (PrepThemeState.isLight3D) Color(0xFF64748B) else Color(0xFF64748B)
-
-
+val NavyCardGradient = Brush.verticalGradient(
+    colors = listOf(Navy800, Navy900)
+)

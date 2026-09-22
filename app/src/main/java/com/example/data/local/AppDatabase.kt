@@ -4,30 +4,35 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.local.dao.AppLimitDao
 import com.example.data.local.dao.FocusSessionDao
 import com.example.data.local.dao.GroupDao
 import com.example.data.local.dao.ScheduleDao
+import com.example.data.local.dao.TestRecordDao
 import com.example.data.local.entity.AppLimitEntity
 import com.example.data.local.entity.FocusSessionEntity
 import com.example.data.local.entity.GroupEntity
 import com.example.data.local.entity.ScheduleEntity
+import com.example.data.local.entity.TestRecordEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
     entities = [
+        TestRecordEntity::class,
         FocusSessionEntity::class,
         ScheduleEntity::class,
         AppLimitEntity::class,
         GroupEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun testRecordDao(): TestRecordDao
     abstract fun focusSessionDao(): FocusSessionDao
     abstract fun scheduleDao(): ScheduleDao
     abstract fun appLimitDao(): AppLimitDao
@@ -37,14 +42,59 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `study_groups` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `code` TEXT NOT NULL,
+                        `description` TEXT NOT NULL,
+                        `memberCount` INTEGER NOT NULL,
+                        `totalHours` REAL NOT NULL,
+                        `myRank` INTEGER NOT NULL,
+                        `joined` INTEGER NOT NULL
+                    )
+                """.trimIndent())
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `test_records` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `testType` TEXT NOT NULL,
+                        `subject` TEXT NOT NULL,
+                        `topicChapter` TEXT NOT NULL,
+                        `testName` TEXT NOT NULL,
+                        `dateStr` TEXT NOT NULL,
+                        `totalMarks` REAL NOT NULL,
+                        `marksObtained` REAL NOT NULL,
+                        `questionsAttempted` INTEGER NOT NULL,
+                        `correctCount` INTEGER NOT NULL,
+                        `wrongCount` INTEGER NOT NULL,
+                        `unattemptedCount` INTEGER NOT NULL,
+                        `accuracy` REAL NOT NULL,
+                        `timeTakenMin` INTEGER NOT NULL,
+                        `difficulty` TEXT NOT NULL,
+                        `mistakeType` TEXT NOT NULL,
+                        `personalNotes` TEXT NOT NULL,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """.trimIndent())
+            }
+        }
+
         fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "prep_air_database"
+                    "testtrack_pro_database"
                 )
-                .fallbackToDestructiveMigration()
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .fallbackToDestructiveMigrationOnDowngrade()
                 .addCallback(DatabaseCallback(scope))
                 .build()
                 INSTANCE = instance
@@ -65,142 +115,86 @@ abstract class AppDatabase : RoomDatabase() {
             }
 
             private suspend fun populateInitialData(db: AppDatabase) {
-                // Initial Schedules from Blueprint
-                val scheduleDao = db.scheduleDao()
-                scheduleDao.insertSchedule(
-                    ScheduleEntity(
-                        name = "Morning Deep Work",
-                        icon = "⚡",
-                        startTime = "08:30 AM",
-                        endTime = "10:30 AM",
-                        repeatDays = "Mon, Tue, Wed, Thu, Fri",
-                        breakMins = 10,
-                        tag = "Deep Focus",
-                        blockNotifs = true,
-                        isEnabled = true
+                val testDao = db.testRecordDao()
+                // Populate realistic initial test records across various subjects and dates
+                testDao.insertRecord(
+                    TestRecordEntity(
+                        testType = "Mock Test",
+                        subject = "Physics",
+                        topicChapter = "Electromagnetism & Optics",
+                        testName = "All India Mock Test 01",
+                        dateStr = "2026-09-15",
+                        totalMarks = 100f,
+                        marksObtained = 82f,
+                        questionsAttempted = 25,
+                        correctCount = 21,
+                        wrongCount = 4,
+                        unattemptedCount = 5,
+                        accuracy = 84f,
+                        timeTakenMin = 55,
+                        difficulty = "Moderate",
+                        mistakeType = "Calculation",
+                        personalNotes = "Calculation blunder in magnetic flux question #14. Formula recall was good."
                     )
                 )
-                scheduleDao.insertSchedule(
-                    ScheduleEntity(
-                        name = "Core Concepts Revision",
-                        icon = "📚",
-                        startTime = "02:00 PM",
-                        endTime = "03:45 PM",
-                        repeatDays = "Mon, Wed, Fri",
-                        breakMins = 5,
-                        tag = "Study",
-                        blockNotifs = true,
-                        isEnabled = true
+                testDao.insertRecord(
+                    TestRecordEntity(
+                        testType = "Chapter Test",
+                        subject = "Chemistry",
+                        topicChapter = "Organic Reactions & Mechanisms",
+                        testName = "Aldehydes & Ketones Drill",
+                        dateStr = "2026-09-17",
+                        totalMarks = 60f,
+                        marksObtained = 54f,
+                        questionsAttempted = 15,
+                        correctCount = 14,
+                        wrongCount = 1,
+                        unattemptedCount = 0,
+                        accuracy = 93.3f,
+                        timeTakenMin = 30,
+                        difficulty = "Hard",
+                        mistakeType = "Misread Question",
+                        personalNotes = "Misread acidic vs basic medium in Cannizzaro reaction. Excellent speed."
                     )
                 )
-                scheduleDao.insertSchedule(
-                    ScheduleEntity(
-                        name = "Problem Solving & Quiz",
-                        icon = "🔬",
-                        startTime = "06:00 PM",
-                        endTime = "07:30 PM",
-                        repeatDays = "Daily",
-                        breakMins = 15,
-                        tag = "Practice",
-                        blockNotifs = true,
-                        isEnabled = false
+                testDao.insertRecord(
+                    TestRecordEntity(
+                        testType = "Speed Test",
+                        subject = "Mathematics",
+                        topicChapter = "Calculus & Integration",
+                        testName = "Definite Integrals Sprint",
+                        dateStr = "2026-09-19",
+                        totalMarks = 80f,
+                        marksObtained = 68f,
+                        questionsAttempted = 20,
+                        correctCount = 17,
+                        wrongCount = 3,
+                        unattemptedCount = 2,
+                        accuracy = 85f,
+                        timeTakenMin = 40,
+                        difficulty = "Hard",
+                        mistakeType = "Time Pressure",
+                        personalNotes = "Ran out of time on last 2 questions. Need to skip 4-step algebra traps earlier."
                     )
                 )
-
-                // Initial App Limits
-                val appLimitDao = db.appLimitDao()
-                appLimitDao.insertLimit(
-                    AppLimitEntity(
-                        packageName = "com.instagram.android",
-                        appName = "Instagram",
-                        iconEmoji = "📷",
-                        dailyLimitMin = 45,
-                        usedTodayMin = 32,
-                        isBlockedShorts = true,
-                        isStrict = false
-                    )
-                )
-                appLimitDao.insertLimit(
-                    AppLimitEntity(
-                        packageName = "com.google.android.youtube",
-                        appName = "YouTube",
-                        iconEmoji = "▶️",
-                        dailyLimitMin = 60,
-                        usedTodayMin = 48,
-                        isBlockedShorts = true,
-                        isStrict = false
-                    )
-                )
-                appLimitDao.insertLimit(
-                    AppLimitEntity(
-                        packageName = "com.snapchat.android",
-                        appName = "Snapchat",
-                        iconEmoji = "👻",
-                        dailyLimitMin = 30,
-                        usedTodayMin = 15,
-                        isBlockedShorts = false,
-                        isStrict = true
-                    )
-                )
-                appLimitDao.insertLimit(
-                    AppLimitEntity(
-                        packageName = "com.facebook.katana",
-                        appName = "Facebook",
-                        iconEmoji = "📘",
-                        dailyLimitMin = 30,
-                        usedTodayMin = 10,
-                        isBlockedShorts = true,
-                        isStrict = false
-                    )
-                )
-
-                // Initial Study Groups
-                val groupDao = db.groupDao()
-                groupDao.insertGroup(
-                    GroupEntity(
-                        name = "PREP_AiR Elite 2026",
-                        code = "AIR-2026",
-                        description = "Aiming for top 100 ranks with consistent 8-hour daily deep focus blocks.",
-                        memberCount = 142,
-                        totalHours = 840.5f,
-                        myRank = 14,
-                        joined = true
-                    )
-                )
-                groupDao.insertGroup(
-                    GroupEntity(
-                        name = "Morning 5 AM Club",
-                        code = "MORN-05",
-                        description = "Early risers locking in 3 hours before 9 AM every day.",
-                        memberCount = 89,
-                        totalHours = 412.0f,
-                        myRank = 6,
-                        joined = true
-                    )
-                )
-                groupDao.insertGroup(
-                    GroupEntity(
-                        name = "Coding & System Design",
-                        code = "CODE-77",
-                        description = "Solving algorithms & building projects in focused Pomodoro sprints.",
-                        memberCount = 63,
-                        totalHours = 295.2f,
-                        myRank = 22,
-                        joined = false
-                    )
-                )
-
-                // Initial Recent Session
-                val focusDao = db.focusSessionDao()
-                focusDao.insertSession(
-                    FocusSessionEntity(
-                        startTime = System.currentTimeMillis() - 7200000,
-                        endTime = System.currentTimeMillis() - 3600000,
-                        durationMin = 60,
-                        mode = "POMODORO",
-                        tagName = "Morning Deep Work",
-                        completed = true,
-                        dateStr = "2026-09-19"
+                testDao.insertRecord(
+                    TestRecordEntity(
+                        testType = "Full Syllabus",
+                        subject = "General Studies",
+                        topicChapter = "Indian Polity & Modern History",
+                        testName = "Prelims Comprehensive Mock",
+                        dateStr = "2026-09-21",
+                        totalMarks = 200f,
+                        marksObtained = 168f,
+                        questionsAttempted = 90,
+                        correctCount = 80,
+                        wrongCount = 10,
+                        unattemptedCount = 10,
+                        accuracy = 88.9f,
+                        timeTakenMin = 110,
+                        difficulty = "Moderate",
+                        mistakeType = "Conceptual",
+                        personalNotes = "Polity articles 32 vs 226 scope confused. Revision of fundamental rights required."
                     )
                 )
             }

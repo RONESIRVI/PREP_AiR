@@ -8,6 +8,7 @@ import android.os.Environment
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import com.example.BuildConfig
+import com.example.util.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -167,6 +168,11 @@ class OtaUpdateManager(private val context: Context) {
                                 updateInfo = updateInfo,
                                 currentVersion = BuildConfig.VERSION_NAME
                             )
+                            NotificationHelper.showUpdateAvailableNotification(
+                                context = context,
+                                versionName = updateInfo.versionName,
+                                releaseTitle = updateInfo.releaseTitle
+                            )
                         }
                     } else {
                         cleanOldApks()
@@ -182,7 +188,7 @@ class OtaUpdateManager(private val context: Context) {
                         simulateLiveReleaseAvailable()
                     } else {
                         _updateStatus.value = UpdateStatus.Error(
-                            message = "Could not fetch from GitHub ($githubRepo): HTTP ${response.code}. You can configure your repository or test OTA update flow.",
+                            message = "GitHub रिपॉजिटरी ($githubRepo) से कनेक्ट नहीं हो सका (HTTP ${response.code})। कृपया इंटरनेट कनेक्शन या रिपॉजिटरी सेटिंग्स जांचें।",
                             currentVersion = BuildConfig.VERSION_NAME
                         )
                     }
@@ -288,6 +294,10 @@ class OtaUpdateManager(private val context: Context) {
                         inputStream.close()
 
                         _updateStatus.value = UpdateStatus.ReadyToInstall(outputFile, updateInfo)
+                        NotificationHelper.showUpdateReadyNotification(
+                            context = context,
+                            versionName = updateInfo.versionName
+                        )
                         return@withContext
                     }
                 }

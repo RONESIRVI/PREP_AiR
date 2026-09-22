@@ -1,65 +1,75 @@
 package com.example.ui.theme
 
+import android.app.Activity
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
-private val LightColorScheme =
-  lightColorScheme(
-    primary = Color(0xFF059669),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFD1FAE5),
-    onPrimaryContainer = Color(0xFF065F46),
-    secondary = Color(0xFF0284C7),
-    onSecondary = Color.White,
-    tertiary = Color(0xFFD97706),
-    onTertiary = Color.White,
-    background = Color(0xFFF1F5F2),
-    onBackground = Color(0xFF0F172A),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF0F172A),
-    surfaceVariant = Color(0xFFE2EBE4),
-    onSurfaceVariant = Color(0xFF475569),
-    outline = Color(0xFFD6E4DA),
-    error = Color(0xFFDC2626),
-    onError = Color.White
-  )
-
-private val DarkColorScheme =
-  darkColorScheme(
-    primary = Color(0xFF4CEF8D),
-    onPrimary = Color.Black,
-    primaryContainer = Color(0xFF1B5E20),
-    onPrimaryContainer = Color(0xFF4CEF8D),
-    secondary = Color(0xFF38BDF8),
+private val DarkColorScheme = darkColorScheme(
+    primary = GoldPrimary,
+    onPrimary = Navy950,
+    primaryContainer = Navy800,
+    onPrimaryContainer = GoldBright,
+    secondary = EmeraldSuccess,
     onSecondary = Color.Black,
-    tertiary = Color(0xFFFBBF24),
-    onTertiary = Color.Black,
-    background = Color(0xFF070B08),
-    onBackground = Color(0xFFF0FDF4),
-    surface = Color(0xFF101912),
-    onSurface = Color(0xFFF0FDF4),
-    surfaceVariant = Color(0xFF17241A),
-    onSurfaceVariant = Color(0xFF94A3B8),
-    outline = Color(0xFF223625),
-    error = Color(0xFFEF4444),
-    onError = Color.White
-  )
+    secondaryContainer = Navy700,
+    onSecondaryContainer = Color.White,
+    tertiary = CyanMetric,
+    background = Navy900,
+    onBackground = TextWhite,
+    surface = Navy800,
+    onSurface = TextWhite,
+    surfaceVariant = Navy700,
+    onSurfaceVariant = TextMutedSlate,
+    outline = Color(0x35F59E0B)
+)
+
+private val LightColorScheme = lightColorScheme(
+    primary = GoldDeep,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFFEF3C7),
+    onPrimaryContainer = Color(0xFF92400E),
+    secondary = EmeraldSuccess,
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFD1FAE5),
+    onSecondaryContainer = Color(0xFF065F46),
+    tertiary = CyanMetric,
+    background = AcademicPaperLight,
+    onBackground = AcademicTextDark,
+    surface = AcademicCardLight,
+    onSurface = AcademicTextDark,
+    surfaceVariant = Color(0xFFF1F5F9),
+    onSurfaceVariant = AcademicTextMuted,
+    outline = AcademicBorderLight
+)
 
 @Composable
 fun MyApplicationTheme(
-  darkTheme: Boolean = !PrepThemeState.isLight3D,
-  dynamicColor: Boolean = false,
-  content: @Composable () -> Unit,
+    darkTheme: Boolean = !TestTrackThemeState.isLightMode,
+    content: @Composable () -> Unit
 ) {
-  val colorScheme = if (PrepThemeState.isLight3D) LightColorScheme else DarkColorScheme
-  MaterialTheme(
-    colorScheme = colorScheme,
-    typography = Typography,
-    content = content
-  )
+    val colorScheme = if (TestTrackThemeState.isLightMode) LightColorScheme else DarkColorScheme
+    val view = LocalView.current
+
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = TestTrackThemeState.isLightMode
+        }
+    }
+
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = Typography,
+        content = content
+    )
 }
-
-

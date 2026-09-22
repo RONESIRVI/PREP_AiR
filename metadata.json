@@ -1,6 +1,6 @@
 {
-  "name": "PREP_AiR",
-  "description": "Study focus timer and phone discipline app with circular focus rings, daily planner, app blocker, study groups, and OTA GitHub auto-update system.",
+  "name": "TestTrack Pro",
+  "description": "Record, analyze, and improve your test performance. Track test scores, subject-wise analytics, topic analysis, mistake patterns, and performance progress.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

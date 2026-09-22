@@ -5,10 +5,30 @@ import com.example.data.local.entity.AppLimitEntity
 import com.example.data.local.entity.FocusSessionEntity
 import com.example.data.local.entity.GroupEntity
 import com.example.data.local.entity.ScheduleEntity
+import com.example.data.local.entity.TestRecordEntity
 import kotlinx.coroutines.flow.Flow
 
 class PrepAirRepository(private val database: AppDatabase) {
+    // TestTrack Pro Records
+    val allTestRecords: Flow<List<TestRecordEntity>> = database.testRecordDao().getAllRecords()
 
+    suspend fun insertTestRecord(record: TestRecordEntity): Long {
+        return database.testRecordDao().insertRecord(record)
+    }
+
+    suspend fun updateTestRecord(record: TestRecordEntity) {
+        database.testRecordDao().updateRecord(record)
+    }
+
+    suspend fun deleteTestRecord(id: Long) {
+        database.testRecordDao().deleteRecordById(id)
+    }
+
+    suspend fun clearAllTestRecords() {
+        database.testRecordDao().clearAllRecords()
+    }
+
+    // Companion/Legacy flows
     val allSessions: Flow<List<FocusSessionEntity>> = database.focusSessionDao().getAllSessions()
     val allSchedules: Flow<List<ScheduleEntity>> = database.scheduleDao().getAllSchedules()
     val allLimits: Flow<List<AppLimitEntity>> = database.appLimitDao().getAllLimits()

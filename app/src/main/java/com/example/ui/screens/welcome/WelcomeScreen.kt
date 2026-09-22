@@ -1,5 +1,10 @@
 package com.example.ui.screens.welcome
 
+import android.Manifest
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -32,7 +37,10 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Schedule
@@ -62,6 +70,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +80,7 @@ import androidx.compose.ui.unit.sp
 import com.example.BuildConfig
 import com.example.data.ota.UpdateInfo
 import com.example.data.ota.UpdateStatus
+import com.example.util.NotificationHelper
 import com.example.ui.theme.PrepBackground
 import com.example.ui.theme.PrepCardBorder
 import com.example.ui.theme.PrepGoldPro
@@ -82,6 +92,7 @@ import com.example.ui.theme.PrepTextMuted
 import com.example.ui.theme.PrepTextPrimary
 import com.example.ui.theme.PrepTextSecondary
 import com.example.ui.components.ComingSoonVerificationDialog
+import com.example.ui.components.PremiumNewVersionCard
 import com.example.ui.components.UpdateSetupDialog
 import com.example.ui.theme.PrepThemeState
 import com.example.ui.theme.threeDCard
@@ -99,17 +110,24 @@ fun WelcomeScreen(
     otaStatus: UpdateStatus,
     postponedUpdate: UpdateInfo? = null,
     onCheckForUpdates: () -> Unit,
-    onSimulateTestUpdate: () -> Unit = {},
-    onOpenOtaSheet: () -> Unit,
     onDownloadUpdate: (UpdateInfo) -> Unit,
     onInstallApk: (File) -> Unit,
     onPostponeToUpdateSetup: (UpdateInfo) -> Unit = {},
     onClearPostponedUpdate: () -> Unit = {},
+    onSimulateTestUpdate: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
     var showComingSoonDialog by remember { mutableStateOf(false) }
     var showUpdateSetupDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    var isNotifAllowed by remember { mutableStateOf(NotificationHelper.areNotificationsAllowed(context)) }
+    val notifPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        isNotifAllowed = granted
+    }
 
     // Gentle ambient pulse for subtle decorative elements
     val infiniteTransition = rememberInfiniteTransition(label = "ambient_pulse")
@@ -574,101 +592,120 @@ fun WelcomeScreen(
                         }
                     }
 
-                    // Card for Postponed Update in Update Setup (If user sent it to setup)
-                    if (postponedUpdate != null) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(PrepGoldPro.copy(alpha = 0.12f))
-                                .border(1.2.dp, PrepGoldPro.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                                .padding(12.dp)
-                                .testTag("postponed_update_banner")
-                        ) {
-                            Column {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.AutoAwesome,
-                                            contentDescription = null,
-                                            tint = PrepGoldPro,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "Update Setup में सुरक्षित: v${postponedUpdate.versionName}",
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = PrepGoldPro
-                                        )
-                                    }
+                    Spacer(modifier = Modifier.height(8.dp))
 
+                    // Notifications Allowed System Bar
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (isNotifAllowed) PrepGreenDark.copy(alpha = 0.35f)
+                                else PrepGoldPro.copy(alpha = 0.15f)
+                            )
+                            .border(
+                                1.dp,
+                                if (isNotifAllowed) PrepGreenBright.copy(alpha = 0.45f)
+                                else PrepGoldPro.copy(alpha = 0.45f),
+                                RoundedCornerShape(10.dp)
+                            )
+                            .clickable {
+                                if (!isNotifAllowed) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        NotificationHelper.openNotificationSettings(context)
+                                    }
+                                } else {
+                                    val sent = NotificationHelper.sendTestNotification(context)
+                                    Toast.makeText(
+                                        context,
+                                        if (sent) "🔔 Notifications System: Active & Test Alert Sent! ✓"
+                                        else "🔔 Notifications System: Settings Opened",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .testTag("notifications_allowed_system_btn")
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = if (isNotifAllowed) Icons.Default.NotificationsActive else Icons.Default.Notifications,
+                                    contentDescription = null,
+                                    tint = if (isNotifAllowed) PrepGreenBright else PrepGoldPro,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
                                     Text(
-                                        text = "बाद के लिए",
-                                        fontSize = 10.sp,
+                                        text = if (isNotifAllowed) "Notifications Allowed System: Active ✓" else "Notifications Allowed System: अनुमति दें",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isNotifAllowed) PrepGreenBright else PrepGoldPro
+                                    )
+                                    Text(
+                                        text = if (isNotifAllowed) "Tap to send test alert • सुरक्षित इन-ऐप अपडेट अलर्ट" else "अपडेट और अलर्ट प्राप्त करने के लिए टैप करें",
+                                        fontSize = 9.sp,
                                         color = PrepTextMuted
                                     )
                                 }
+                            }
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (isNotifAllowed) PrepGreenBright else PrepGoldPro)
+                                    .clickable {
+                                        if (!isNotifAllowed) {
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                            } else {
+                                                NotificationHelper.openNotificationSettings(context)
+                                            }
+                                        } else {
+                                            val sent = NotificationHelper.sendTestNotification(context)
+                                            Toast.makeText(
+                                                context,
+                                                if (sent) "🔔 Test notification sent! ✓" else "Notification active",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    .testTag("notifications_test_action_btn")
+                            ) {
                                 Text(
-                                    text = "यह अपडेट बाद में इंस्टॉल करने के लिए Update Setup में रखा गया है। आप जब चाहें 1-क्लिक में बिना किसी लिंक के इंस्टॉल कर सकते हैं।",
-                                    fontSize = 11.sp,
-                                    color = PrepTextSecondary,
-                                    lineHeight = 15.sp
+                                    text = if (isNotifAllowed) "Test 🔔" else "Allow",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
                                 )
-
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Button(
-                                        onClick = { onDownloadUpdate(postponedUpdate) },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = PrepGoldPro,
-                                            contentColor = Color.Black
-                                        ),
-                                        shape = RoundedCornerShape(8.dp),
-                                        modifier = Modifier
-                                            .weight(1.2f)
-                                            .height(38.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.RocketLaunch,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "अभी Install करें",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-
-                                    OutlinedButton(
-                                        onClick = { showUpdateSetupDialog = true },
-                                        shape = RoundedCornerShape(8.dp),
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(38.dp)
-                                    ) {
-                                        Text(
-                                            text = "Setup खोलें",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = PrepTextPrimary
-                                        )
-                                    }
-                                }
                             }
                         }
+                    }
+
+                    // Card for Postponed Update in Update Setup (If user sent it to setup)
+                    if (postponedUpdate != null && otaStatus !is UpdateStatus.UpdateAvailable) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        PremiumNewVersionCard(
+                            updateInfo = postponedUpdate,
+                            currentVersion = BuildConfig.VERSION_NAME,
+                            onDownloadNow = { onDownloadUpdate(postponedUpdate) },
+                            onSecondaryAction = { showUpdateSetupDialog = true },
+                            secondaryActionText = "Open Update Setup (सेटअप खोलें)",
+                            secondaryActionIcon = Icons.Default.SystemUpdate
+                        )
                     }
 
                     // Dynamic status display based on otaStatus
@@ -707,113 +744,14 @@ fun WelcomeScreen(
 
                         is UpdateStatus.UpdateAvailable -> {
                             Spacer(modifier = Modifier.height(12.dp))
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(PrepGoldPro.copy(alpha = 0.12f))
-                                    .border(1.2.dp, PrepGoldPro.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                                    .padding(12.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.AutoAwesome,
-                                            contentDescription = null,
-                                            tint = PrepGoldPro,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "New Update Available: v${s.updateInfo.versionName}",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = PrepGoldPro
-                                        )
-                                    }
-
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(PrepGoldPro.copy(alpha = 0.2f))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = "v${BuildConfig.VERSION_NAME} ➔ v${s.updateInfo.versionName}",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            fontFamily = FontFamily.Monospace,
-                                            color = PrepGoldPro
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = s.updateInfo.releaseTitle,
-                                    fontSize = 12.sp,
-                                    color = PrepTextSecondary
-                                )
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // TWO OPTIONS: 1. Update Now (No Link) OR 2. Send to Update Setup (For later)
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    // Option 1: Update Now
-                                    Button(
-                                        onClick = { onDownloadUpdate(s.updateInfo) },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = PrepGoldPro,
-                                            contentColor = Color.Black
-                                        ),
-                                        shape = RoundedCornerShape(10.dp),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(42.dp)
-                                            .testTag("welcome_download_update_now_btn")
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Download,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "🚀 अभी अपडेट करें (Update Now)",
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-
-                                    // Option 2: Postpone / Send to Update Setup
-                                    OutlinedButton(
-                                        onClick = { onPostponeToUpdateSetup(s.updateInfo) },
-                                        shape = RoundedCornerShape(10.dp),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(40.dp)
-                                            .testTag("welcome_send_to_update_setup_btn")
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Schedule,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(15.dp),
-                                            tint = PrepTextPrimary
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "📦 बाद में करने के लिए Update Setup में भेजें",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = PrepTextPrimary
-                                        )
-                                    }
-                                }
-                            }
+                            PremiumNewVersionCard(
+                                updateInfo = s.updateInfo,
+                                currentVersion = BuildConfig.VERSION_NAME,
+                                onDownloadNow = { onDownloadUpdate(s.updateInfo) },
+                                onSecondaryAction = { onPostponeToUpdateSetup(s.updateInfo) },
+                                secondaryActionText = "📦 बाद में करने के लिए Update Setup में भेजें",
+                                secondaryActionIcon = Icons.Default.Schedule
+                            )
                         }
 
                         is UpdateStatus.Downloading -> {
@@ -977,6 +915,66 @@ fun WelcomeScreen(
                                 )
 
                                 Spacer(modifier = Modifier.height(10.dp))
+                                Button(
+                                    onClick = onCheckForUpdates,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (PrepThemeState.isLight3D) Color(0xFF0F172A) else PrepSurfaceCard,
+                                        contentColor = Color.White
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(38.dp)
+                                        .testTag("welcome_check_updates_btn")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = PrepGreenBright
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Re-check OTA Updates",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        is UpdateStatus.Error -> {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (PrepThemeState.isLight3D) Color(0xFFFEF3C7) else PrepSurfaceVariant)
+                                    .padding(12.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = PrepGoldPro,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Remote GitHub Repo Connect Status",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (PrepThemeState.isLight3D) Color(0xFF92400E) else PrepGoldPro
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = s.message,
+                                    fontSize = 10.sp,
+                                    color = PrepTextMuted,
+                                    lineHeight = 14.sp
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -987,47 +985,42 @@ fun WelcomeScreen(
                                             containerColor = if (PrepThemeState.isLight3D) Color(0xFF0F172A) else PrepSurfaceCard,
                                             contentColor = Color.White
                                         ),
-                                        shape = RoundedCornerShape(10.dp),
+                                        shape = RoundedCornerShape(8.dp),
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height(36.dp)
-                                            .testTag("welcome_check_updates_btn")
+                                            .height(38.dp)
+                                            .testTag("welcome_retry_check_btn")
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Refresh,
                                             contentDescription = null,
-                                            modifier = Modifier.size(13.dp),
+                                            modifier = Modifier.size(14.dp),
                                             tint = PrepGreenBright
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "Re-check OTA",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                        Text("Re-check", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     }
 
-                                    OutlinedButton(
+                                    Button(
                                         onClick = onSimulateTestUpdate,
-                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = PrepGoldPro,
+                                            contentColor = Color.Black
+                                        ),
+                                        shape = RoundedCornerShape(8.dp),
                                         modifier = Modifier
-                                            .weight(1f)
-                                            .height(36.dp)
+                                            .weight(1.2f)
+                                            .height(38.dp)
                                             .testTag("welcome_simulate_update_btn")
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.AutoAwesome,
+                                            imageVector = Icons.Default.RocketLaunch,
                                             contentDescription = null,
-                                            tint = PrepGoldPro,
-                                            modifier = Modifier.size(13.dp)
+                                            modifier = Modifier.size(14.dp),
+                                            tint = Color.Black
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "Test Update v1.1.0",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = PrepTextPrimary
-                                        )
+                                        Text("Test Live Update", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -1039,7 +1032,6 @@ fun WelcomeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                // Check Updates
                                 Button(
                                     onClick = onCheckForUpdates,
                                     colors = ButtonDefaults.buttonColors(
@@ -1049,13 +1041,13 @@ fun WelcomeScreen(
                                     shape = RoundedCornerShape(10.dp),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(38.dp)
+                                        .height(42.dp)
                                         .testTag("welcome_check_updates_btn")
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Refresh,
                                         contentDescription = null,
-                                        modifier = Modifier.size(14.dp),
+                                        modifier = Modifier.size(15.dp),
                                         tint = PrepGreenBright
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
@@ -1066,27 +1058,29 @@ fun WelcomeScreen(
                                     )
                                 }
 
-                                // Quick Test/Simulate Update
-                                OutlinedButton(
+                                Button(
                                     onClick = onSimulateTestUpdate,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = PrepGoldPro,
+                                        contentColor = Color.Black
+                                    ),
                                     shape = RoundedCornerShape(10.dp),
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .height(38.dp)
-                                        .testTag("welcome_simulate_update_btn")
+                                        .weight(1.1f)
+                                        .height(42.dp)
+                                        .testTag("welcome_test_live_update_btn")
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.AutoAwesome,
+                                        imageVector = Icons.Default.RocketLaunch,
                                         contentDescription = null,
-                                        tint = PrepGoldPro,
-                                        modifier = Modifier.size(14.dp)
+                                        modifier = Modifier.size(15.dp),
+                                        tint = Color.Black
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "Test Update v1.1.0",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = PrepTextPrimary
+                                        text = "Test Update Flow",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
                             }

@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "PREP_AiR"
+rootProject.name = "TestTrack Pro"
 
 include(":app")

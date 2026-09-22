@@ -6,12 +6,29 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Group strictly centered inside 66dp safe zone (radius 31, center 54,54) -->
-    <!-- Outer Focus Energy Ring with Sweep Gradient -->
+    <!-- 
+      Core symbol strictly centered within safe area (center: 54, 54):
+      1. Open Book (Learning / Test knowledge)
+      2. Rising Performance Bars (Test performance)
+      3. Upward Arrow (Progress / improvement)
+      Colors: Gold & Amber (#F59E0B, #FBBF24, #D97706) & Deep Navy (#0B132B) & Emerald Accent (#10B981)
+    -->
+
+    <!-- 3D Rounded-Square Icon Container Shield Subtle Backing Glow -->
     <path
-        android:strokeWidth="3.8"
-        android:strokeLineCap="round"
-        android:pathData="M54,26 A28,28 0 1 1 32,37">
+        android:pathData="M32,26 L76,26 A6,6 0 0 1 82,32 L82,76 A6,6 0 0 1 76,82 L32,82 A6,6 0 0 1 26,76 L26,32 A6,6 0 0 1 32,26 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="26"
+                android:startY="26"
+                android:endX="82"
+                android:endY="82"
+                android:type="linear">
+                <item android:color="#30F59E0B" android:offset="0.0" />
+                <item android:color="#151E3A8A" android:offset="0.6" />
+                <item android:color="#250F172A" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:startX="26"
@@ -19,88 +36,194 @@
                 android:endX="82"
                 android:endY="82"
                 android:type="linear">
-                <item android:color="#4CEF8D" android:offset="0.0" />
-                <item android:color="#38BDF8" android:offset="0.6" />
+                <item android:color="#60FBBF24" android:offset="0.0" />
+                <item android:color="#20F59E0B" android:offset="0.5" />
+                <item android:color="#403B82F6" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 1. OPEN BOOK (Base Platform of Academic Knowledge) -->
+    <!-- Left Page -->
+    <path
+        android:pathData="M54,73 C48,70 38,68 31,71 L31,58 C38,55 48,57 54,60 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="31"
+                android:startY="58"
+                android:endX="54"
+                android:endY="73"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#F1F5F9" android:offset="0.6" />
+                <item android:color="#CBD5E1" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="31"
+                android:startY="58"
+                android:endX="54"
+                android:endY="73"
+                android:type="linear">
+                <item android:color="#D97706" android:offset="0.0" />
+                <item android:color="#F59E0B" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Right Page -->
+    <path
+        android:pathData="M54,73 C60,70 70,68 77,71 L77,58 C70,55 60,57 54,60 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="58"
+                android:endX="77"
+                android:endY="73"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#F8FAFC" android:offset="0.5" />
+                <item android:color="#E2E8F0" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="54"
+                android:startY="58"
+                android:endX="77"
+                android:endY="73"
+                android:type="linear">
+                <item android:color="#F59E0B" android:offset="0.0" />
+                <item android:color="#D97706" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Book Spine & Center Binding Ribbon -->
+    <path
+        android:strokeColor="#B45309"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M54,60 L54,74" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M53.2,74 L54.8,74 L55.4,77 L54,76 L52.6,77 Z" />
+
+    <!-- 2. RISING PERFORMANCE BARS (Ascending Test Performance) -->
+    <!-- Bar 1 (Left - Initial Stage) -->
+    <path
+        android:pathData="M37,63 L41,63 L41,52 L37,52 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="37"
+                android:startY="63"
+                android:endX="41"
+                android:endY="52"
+                android:type="linear">
+                <item android:color="#D97706" android:offset="0.0" />
+                <item android:color="#F59E0B" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Bar 2 (Mid-Left - Building Consistency) -->
+    <path
+        android:pathData="M44,62 L48,62 L48,44 L44,44 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="44"
+                android:startY="62"
+                android:endX="48"
+                android:endY="44"
+                android:type="linear">
+                <item android:color="#F59E0B" android:offset="0.0" />
                 <item android:color="#FBBF24" android:offset="1.0" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Ring Accent Orbital Nodes -->
+    <!-- Bar 3 (Mid-Right - High Accuracy) -->
     <path
-        android:fillColor="#4CEF8D"
-        android:pathData="M54,23 a3,3 0 1 0 0.01,0 Z" />
-    <path
-        android:fillColor="#38BDF8"
-        android:pathData="M82,54 a2.2,2.2 0 1 0 0.01,0 Z" />
-    <path
-        android:fillColor="#FBBF24"
-        android:pathData="M54,82 a2.5,2.5 0 1 0 0.01,0 Z" />
+        android:pathData="M51,61 L55,61 L55,37 L51,37 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="51"
+                android:startY="61"
+                android:endX="55"
+                android:endY="37"
+                android:type="linear">
+                <item android:color="#FBBF24" android:offset="0.0" />
+                <item android:color="#34D399" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- Sleek Geometric Focus Shield / Hourglass Body -->
+    <!-- Bar 4 (Right - Peak Performance) -->
     <path
-        android:strokeWidth="1.8"
+        android:pathData="M58,62 L62,62 L62,31 L58,31 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="58"
+                android:startY="62"
+                android:endX="62"
+                android:endY="31"
+                android:type="linear">
+                <item android:color="#34D399" android:offset="0.0" />
+                <item android:color="#10B981" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Bar Highlight Caps (3D effect) -->
+    <path
+        android:fillColor="#FEF3C7"
+        android:pathData="M37,52 L41,52 L41,53.5 L37,53.5 Z M44,44 L48,44 L48,45.5 L44,45.5 Z M51,37 L55,37 L55,38.5 L51,38.5 Z M58,31 L62,31 L62,32.5 L58,32.5 Z" />
+
+    <!-- 3. UPWARD ARROW (Progress / Score Improvement) -->
+    <!-- Upward Trend Line -->
+    <path
+        android:strokeWidth="3.2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M37,34 L71,34 L62,51 L71,68 L37,68 L46,51 Z">
+        android:pathData="M37,54 L46,47 L53,40 L65,28">
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:startX="37"
-                android:startY="34"
-                android:endX="71"
-                android:endY="68"
+                android:startY="54"
+                android:endX="65"
+                android:endY="28"
                 android:type="linear">
-                <item android:color="#504CEF8D" android:offset="0.0" />
-                <item android:color="#3038BDF8" android:offset="0.5" />
-                <item android:color="#504CEF8D" android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="37"
-                android:startY="34"
-                android:endX="71"
-                android:endY="68"
-                android:type="linear">
-                <item android:color="#25123020" android:offset="0.0" />
-                <item android:color="#350A1A12" android:offset="1.0" />
+                <item android:color="#F59E0B" android:offset="0.0" />
+                <item android:color="#FBBF24" android:offset="0.5" />
+                <item android:color="#FFFFFF" android:offset="1.0" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Central Dynamic Lightning Bolt Symbol of Peak Focus & Discipline -->
+    <!-- Arrow Head pointing Upward-Right -->
     <path
-        android:pathData="M56,33 L45,51 L53,51 L48,69 L63,48 L55,48 Z">
+        android:pathData="M58,26 L69,25 L68,36 L64,32 L60,32 Z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:startX="45"
-                android:startY="33"
-                android:endX="63"
-                android:endY="69"
+                android:startX="58"
+                android:startY="25"
+                android:endX="69"
+                android:endY="36"
                 android:type="linear">
                 <item android:color="#FFFFFF" android:offset="0.0" />
-                <item android:color="#4CEF8D" android:offset="0.35" />
-                <item android:color="#22C55E" android:offset="0.75" />
-                <item android:color="#FBBF24" android:offset="1.0" />
+                <item android:color="#FDE047" android:offset="0.5" />
+                <item android:color="#F59E0B" android:offset="1.0" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Inner Core Lightning Specular Flare -->
+    <!-- Shimmer Sparkles / Achievement Starlet -->
     <path
-        android:fillColor="#80FFFFFF"
-        android:pathData="M55,36 L47,50 L52,50 L49,60 L57,49 L54,49 Z" />
-
-    <!-- Lateral Focus Turbine Wings -->
+        android:fillColor="#FFFFFF"
+        android:pathData="M71,22 L72.2,25.2 L75.4,26.4 L72.2,27.6 L71,30.8 L69.8,27.6 L66.6,26.4 L69.8,25.2 Z" />
     <path
-        android:strokeColor="#604CEF8D"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"
-        android:pathData="M31,48 L35,54 L31,60" />
-    <path
-        android:strokeColor="#6038BDF8"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"
-        android:pathData="M77,48 L73,54 L77,60" />
+        android:fillColor="#FDE047"
+        android:pathData="M33,48 L33.8,50 L35.8,50.8 L33.8,51.6 L33,53.6 L32.2,51.6 L30.2,50.8 L32.2,50 Z" />
 
 </vector>

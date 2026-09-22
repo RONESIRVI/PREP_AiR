@@ -9,6 +9,7 @@ import com.example.data.local.entity.AppLimitEntity
 import com.example.data.local.entity.FocusSessionEntity
 import com.example.data.local.entity.GroupEntity
 import com.example.data.local.entity.ScheduleEntity
+import com.example.data.local.entity.TestRecordEntity
 import com.example.data.ota.OtaUpdateManager
 import com.example.data.ota.UpdateInfo
 import com.example.data.ota.UpdateStatus
@@ -30,7 +31,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = PrepAirRepository(database)
     val otaUpdateManager = OtaUpdateManager(application)
 
-    // Room Database Flows
+    // --- Section 01 & Section 02: TestTrack Pro Records ---
+    val testRecords: StateFlow<List<TestRecordEntity>> = repository.allTestRecords
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun saveTestRecord(record: TestRecordEntity) {
+        viewModelScope.launch {
+            repository.insertTestRecord(record)
+        }
+    }
+
+    fun updateTestRecord(record: TestRecordEntity) {
+        viewModelScope.launch {
+            repository.updateTestRecord(record)
+        }
+    }
+
+    fun deleteTestRecord(id: Long) {
+        viewModelScope.launch {
+            repository.deleteTestRecord(id)
+        }
+    }
+
+    fun clearAllTestRecords() {
+        viewModelScope.launch {
+            repository.clearAllTestRecords()
+        }
+    }
+
+    // --- Auxiliary / Companion Flows ---
     val schedules: StateFlow<List<ScheduleEntity>> = repository.allSchedules
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -62,10 +91,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var timerJob: Job? = null
 
     // Daily Stats State
-    private val _todayFocusMinutes = MutableStateFlow(165) // 2h 45m initial
+    private val _todayFocusMinutes = MutableStateFlow(165)
     val todayFocusMinutes: StateFlow<Int> = _todayFocusMinutes.asStateFlow()
 
-    private val _todayScreenTimeMinutes = MutableStateFlow(95) // 1h 35m initial
+    private val _todayScreenTimeMinutes = MutableStateFlow(95)
     val todayScreenTimeMinutes: StateFlow<Int> = _todayScreenTimeMinutes.asStateFlow()
 
     // Focus Music State
@@ -78,54 +107,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _audioVolume = MutableStateFlow(0.7f)
     val audioVolume: StateFlow<Float> = _audioVolume.asStateFlow()
 
-    // Shield Toggles State
+    // App Blocker & Discipline States
     private val _blockShortsEnabled = MutableStateFlow(true)
     val blockShortsEnabled: StateFlow<Boolean> = _blockShortsEnabled.asStateFlow()
 
     private val _strictModeEnabled = MutableStateFlow(false)
     val strictModeEnabled: StateFlow<Boolean> = _strictModeEnabled.asStateFlow()
 
-    private val _uninstallProtectionEnabled = MutableStateFlow(false)
+    private val _uninstallProtectionEnabled = MutableStateFlow(true)
     val uninstallProtectionEnabled: StateFlow<Boolean> = _uninstallProtectionEnabled.asStateFlow()
 
-    private val _websiteBlockerEnabled = MutableStateFlow(false)
+    private val _websiteBlockerEnabled = MutableStateFlow(true)
     val websiteBlockerEnabled: StateFlow<Boolean> = _websiteBlockerEnabled.asStateFlow()
 
-    // OTA Update State
+    // OTA Status Flow from Manager
     val otaStatus: StateFlow<UpdateStatus> = otaUpdateManager.updateStatus
 
-    // Update Setup Queue: stores postponed updates for later 1-click in-app install
+    // Postponed update state
     private val _postponedUpdate = MutableStateFlow<UpdateInfo?>(null)
     val postponedUpdate: StateFlow<UpdateInfo?> = _postponedUpdate.asStateFlow()
 
-    init {
-        // Automatically check GitHub for updates on launch as requested
-        if (otaUpdateManager.autoCheckOnStart) {
-            viewModelScope.launch {
-                delay(1500) // Brief delay to allow UI to render first
-                otaUpdateManager.checkForUpdates(forceSimulateIfNotFound = false)
-            }
-        }
-    }
-
-    // --- Timer Controls ---
     fun setFocusMode(mode: FocusMode) {
-        pauseTimer()
         _focusMode.value = mode
-        val defaultSecs = when (mode) {
-            FocusMode.TIMER -> 45 * 60
+        val defaultMins = when (mode) {
+            FocusMode.POMODORO -> 25
+            FocusMode.TIMER -> 45
             FocusMode.STOPWATCH -> 0
-            FocusMode.POMODORO -> 25 * 60
         }
-        _initialDurationSeconds.value = defaultSecs
-        _secondsRemaining.value = defaultSecs
+        setPresetDuration(defaultMins)
     }
 
     fun setPresetDuration(minutes: Int) {
-        pauseTimer()
-        val secs = minutes * 60
-        _initialDurationSeconds.value = secs
-        _secondsRemaining.value = secs
+        if (!_isTimerRunning.value) {
+            _initialDurationSeconds.value = minutes * 60
+            _secondsRemaining.value = minutes * 60
+        }
     }
 
     fun toggleStartPause() {
@@ -145,19 +161,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isTimerRunning.value = true
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
-            while (_isTimerRunning.value) {
-                delay(1000)
-                if (_focusMode.value == FocusMode.STOPWATCH) {
-                    _secondsRemaining.value += 1
-                } else {
-                    if (_secondsRemaining.value > 0) {
-                        _secondsRemaining.value -= 1
-                    } else {
-                        // Timer completed!
-                        onTimerCompleted()
-                        break
-                    }
-                }
+            while (_isTimerRunning.value && _secondsRemaining.value > 0) {
+                delay(1000L)
+                _secondsRemaining.value -= 1
+            }
+            if (_secondsRemaining.value <= 0) {
+                onTimerCompleted()
             }
         }
     }
@@ -168,11 +177,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun onTimerCompleted() {
-        pauseTimer()
+        _isTimerRunning.value = false
         val durationMins = _initialDurationSeconds.value / 60
         _todayFocusMinutes.value += durationMins
-
-        // Persist to Room
         viewModelScope.launch {
             repository.saveSession(
                 FocusSessionEntity(
@@ -180,23 +187,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     endTime = System.currentTimeMillis(),
                     durationMin = durationMins,
                     mode = _focusMode.value.name,
-                    tagName = if (_focusMode.value == FocusMode.POMODORO) "Pomodoro Sprint" else "Deep Focus",
+                    tagName = "Focus Session",
                     completed = true,
-                    dateStr = "2026-09-19"
+                    dateStr = "Today"
                 )
             )
         }
-        _secondsRemaining.value = _initialDurationSeconds.value
     }
 
     fun setDeepFocusEnabled(enabled: Boolean) {
         _deepFocusEnabled.value = enabled
     }
 
-    // --- Audio Player ---
     fun selectAudioTrack(trackId: String) {
         _activeAudioTrackId.value = trackId
-        _isAudioPlaying.value = true
     }
 
     fun toggleAudioPlayPause() {
@@ -207,7 +211,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _audioVolume.value = vol
     }
 
-    // --- Planner & Schedules ---
     fun toggleSchedule(schedule: ScheduleEntity) {
         viewModelScope.launch {
             repository.updateSchedule(schedule.copy(isEnabled = !schedule.isEnabled))
@@ -227,34 +230,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startSessionForSchedule(schedule: ScheduleEntity) {
-        setFocusMode(FocusMode.POMODORO)
-        setPresetDuration(45)
-        if (schedule.isStrict) {
-            setStrictMode(true)
-        }
-        if (schedule.blockYouTubeShorts) {
-            setBlockShorts(true)
-        }
-        if (schedule.blockBrowserApps) {
-            setWebsiteBlocker(true)
-        }
+        pauseTimer()
+        val durationMin = 45
+        _initialDurationSeconds.value = durationMin * 60
+        _secondsRemaining.value = durationMin * 60
+        _focusMode.value = FocusMode.TIMER
         startTimer()
     }
 
-    // --- Groups ---
     fun joinGroup(code: String) {
         viewModelScope.launch {
-            repository.addGroup(
-                GroupEntity(
-                    name = "Joined Group $code",
-                    code = code,
-                    description = "Peer focus squad joined via invite code",
-                    memberCount = 28,
-                    totalHours = 120.0f,
-                    myRank = 15,
-                    joined = true
-                )
+            val newGroup = GroupEntity(
+                name = "Study Squad #${code.take(4)}",
+                code = code,
+                description = "Custom study accountability squad joined via invitation code.",
+                memberCount = 1,
+                totalHours = 0f,
+                myRank = 1,
+                joined = true
             )
+            repository.addGroup(newGroup)
         }
     }
 
@@ -264,16 +259,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // --- Shields & App Limits ---
     fun setBlockShorts(enabled: Boolean) {
         _blockShortsEnabled.value = enabled
     }
 
     fun setStrictMode(enabled: Boolean) {
         _strictModeEnabled.value = enabled
-        if (enabled) {
-            _deepFocusEnabled.value = true
-        }
     }
 
     fun setUninstallProtection(enabled: Boolean) {
@@ -322,10 +313,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         otaUpdateManager.dismissUpdate()
     }
 
-    /**
-     * Postpones the detected update and stores it in Update Setup so the user
-     * can install it later with a single tap without being interrupted.
-     */
     fun postponeToUpdateSetup(updateInfo: UpdateInfo) {
         _postponedUpdate.value = updateInfo
         otaUpdateManager.dismissUpdate()
