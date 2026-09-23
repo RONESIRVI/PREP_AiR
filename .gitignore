@@ -1,0 +1,19 @@
+*.iml
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Ignore keystores
+*.jks
+*.keystore
+
+# Ignore build directories in all subdirectories
+build/
+app/build/
+jdk17/

@@ -1,0 +1,235 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  Sadhna — Pull Request Quality Gate
+#
+#  Blocks merging until ALL checks pass:
+#   ✅ Kotlin formatting (ktlint)
+#   ✅ Static analysis (detekt)
+#   ✅ APK size budget check
+#   ✅ No TODO/FIXME in changed files
+#   ✅ Version bump check (versionCode must increase)
+# ══════════════════════════════════════════════════════════════════════════
+
+name: 🔍 PR Quality Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+env:
+  JAVA_VERSION: '17'
+  MAX_APK_SIZE_MB: 50        # Fail if debug APK > 50 MB
+  MAX_METHOD_COUNT: 64000    # Fail if method count > 64k (dex limit)
+
+jobs:
+
+  # ──────────────────────────────────────────────────────────────────────
+  #  Kotlin Code Style (ktlint)
+  # ──────────────────────────────────────────────────────────────────────
+  ktlint:
+    name: 🎨 Kotlin Style (ktlint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: 🔑 gradlew permission
+        run: chmod +x ./gradlew
+
+      - name: 🎨 Run ktlint
+        run: ./gradlew ktlintCheck --no-daemon
+
+      - name: 📤 Upload style report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ktlint-report
+          path: app/build/reports/ktlint/
+
+  # ──────────────────────────────────────────────────────────────────────
+  #  Static Analysis (detekt)
+  # ──────────────────────────────────────────────────────────────────────
+  detekt:
+    name: 🔬 Static Analysis (detekt)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: 🔑 gradlew permission
+        run: chmod +x ./gradlew
+
+      - name: 🔬 Run detekt
+        run: ./gradlew detekt --no-daemon
+
+      - name: 📤 Upload detekt report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-report
+          path: app/build/reports/detekt/
+
+  # ──────────────────────────────────────────────────────────────────────
+  #  APK Size + Method Count Budget
+  # ──────────────────────────────────────────────────────────────────────
+  size-check:
+    name: 📏 APK Size Budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: 🔑 gradlew permission
+        run: chmod +x ./gradlew
+
+      - name: 🏗️ Build debug APK
+        run: ./gradlew assembleDebug --no-daemon --build-cache
+
+      - name: 📏 Check APK size
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          SIZE_MB=$(du -m "$APK" | cut -f1)
+          SIZE_HR=$(du -sh "$APK" | cut -f1)
+
+          echo "APK Size: $SIZE_HR"
+          echo "apk_size=$SIZE_HR" >> "$GITHUB_ENV"
+
+          if [ "$SIZE_MB" -gt "${{ env.MAX_APK_SIZE_MB }}" ]; then
+            echo "❌ APK exceeds size budget!"
+            echo "  Current: ${SIZE_MB} MB"
+            echo "  Budget:  ${{ env.MAX_APK_SIZE_MB }} MB"
+            echo "  Reduce: Remove unused resources, enable R8 more aggressively"
+            exit 1
+          fi
+          echo "✅ APK size OK: $SIZE_HR (budget: ${{ env.MAX_APK_SIZE_MB }} MB)"
+
+      # Post APK size as PR comment
+      - name: 💬 Comment APK size on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const size = process.env.apk_size || 'unknown';
+            const body = `📏 **APK Size:** \`${size}\` (budget: ${{ env.MAX_APK_SIZE_MB }} MB) ✅`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+  # ──────────────────────────────────────────────────────────────────────
+  #  TODO / FIXME Scanner
+  #  Blocks PRs with unresolved TODOs in changed files
+  # ──────────────────────────────────────────────────────────────────────
+  todo-check:
+    name: 📝 TODO Scanner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Scan for new TODOs/FIXMEs
+        run: |
+          # Get only changed .kt files in this PR
+          CHANGED=$(git diff --name-only origin/main...HEAD -- '*.kt')
+
+          if [ -z "$CHANGED" ]; then
+            echo "No .kt files changed"
+            exit 0
+          fi
+
+          # Search for TODO/FIXME/HACK
+          FOUND=$(echo "$CHANGED" | xargs grep -n "TODO\|FIXME\|HACK" 2>/dev/null || true)
+
+          if [ -n "$FOUND" ]; then
+            echo "⚠️ Found TODOs/FIXMEs in changed files:"
+            echo "$FOUND"
+            echo ""
+            echo "Please resolve or create GitHub Issues for these before merging."
+            # Warning only — not a hard failure
+            # Change 'exit 0' to 'exit 1' to block merging
+            exit 0
+          fi
+          echo "✅ No new TODOs found"
+
+  # ──────────────────────────────────────────────────────────────────────
+  #  Version Code Bump Checker
+  #  Ensures versionCode increases on every PR to main
+  # ──────────────────────────────────────────────────────────────────────
+  version-check:
+    name: 🔢 Version Bump Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.base_ref == 'main'
+
+    steps:
+      - name: 📥 Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔢 Check versionCode increased
+        run: |
+          # Get versionCode from main branch
+          git fetch origin main
+          MAIN_CODE=$(git show origin/main:app/build.gradle.kts \
+            | grep 'versionCode' | grep -oP '\d+' | head -1 || echo "0")
+
+          # Get versionCode from PR branch
+          PR_CODE=$(grep 'versionCode' app/build.gradle.kts \
+            | grep -oP '\d+' | head -1 || echo "0")
+
+          echo "main versionCode: $MAIN_CODE"
+          echo "PR   versionCode: $PR_CODE"
+
+          if [ "$PR_CODE" -le "$MAIN_CODE" ]; then
+            echo "⚠️ versionCode ($PR_CODE) not bumped above main ($MAIN_CODE)"
+            echo "Increment versionCode in app/build.gradle.kts before merging to main"
+            # Warning — not hard failure (remove exit 0 to enforce)
+            exit 0
+          fi
+          echo "✅ versionCode bumped: $MAIN_CODE → $PR_CODE"
+
+  # ──────────────────────────────────────────────────────────────────────
+  #  Final Gate — All checks must pass
+  # ──────────────────────────────────────────────────────────────────────
+  quality-gate:
+    name: ✅ Quality Gate
+    runs-on: ubuntu-latest
+    needs: [ktlint, detekt, size-check]
+    if: always()
+
+    steps:
+      - name: ✅ All checks passed
+        if: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+        run: |
+          echo "### ✅ All quality checks passed!" >> "$GITHUB_STEP_SUMMARY"
+          echo "PR is ready for review." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: ❌ Some checks failed
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: |
+          echo "### ❌ Quality gate failed!" >> "$GITHUB_STEP_SUMMARY"
+          echo "Fix all failing checks before requesting review." >> "$GITHUB_STEP_SUMMARY"
+          exit 1

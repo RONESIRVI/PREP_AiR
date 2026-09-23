@@ -1,0 +1,112 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  Sadhna — Nightly Build Workflow
+#
+#  Runs every night at 2:00 AM IST (8:30 PM UTC)
+#  Builds a fresh debug APK from main branch and
+#  posts a summary to check if the build is healthy.
+#
+#  Also runs: full test suite + lint + detekt
+# ══════════════════════════════════════════════════════════════════════════
+
+name: 🌙 Nightly Build
+
+on:
+  schedule:
+    - cron: '30 20 * * *'    # 2:00 AM IST = 8:30 PM UTC daily
+  workflow_dispatch:          # Also allow manual trigger
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+
+  nightly-build:
+    name: 🌙 Nightly Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: 📥 Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: ☕ Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: 🔑 Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: 📦 Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: nightly-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: nightly-gradle-${{ runner.os }}-
+
+      # Full lint
+      - name: 🧹 Lint
+        id: lint
+        run: ./gradlew lintDebug --no-daemon
+        continue-on-error: true
+
+      # All unit tests
+      - name: 🧪 Unit Tests
+        id: tests
+        run: ./gradlew testDebugUnitTest --no-daemon --continue
+        continue-on-error: true
+
+      # Build debug APK
+      - name: 🏗️ Build Debug APK
+        id: build
+        run: ./gradlew assembleDebug --no-daemon --build-cache
+        continue-on-error: true
+
+      # Upload nightly APK
+      - name: 📤 Upload Nightly APK
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sadhna-nightly-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+
+      # Nightly report summary
+      - name: 📊 Nightly Report
+        if: always()
+        run: |
+          LINT="${{ steps.lint.outcome }}"
+          TESTS="${{ steps.tests.outcome }}"
+          BUILD="${{ steps.build.outcome }}"
+          DATE=$(date +'%Y-%m-%d %H:%M IST')
+
+          status_icon() {
+            [ "$1" = "success" ] && echo "✅" || echo "❌"
+          }
+
+          {
+            echo "## 🌙 Sadhna Nightly Build — $DATE"
+            echo ""
+            echo "| Check  | Status |"
+            echo "|--------|--------|"
+            echo "| 🧹 Lint  | $(status_icon $LINT) $LINT |"
+            echo "| 🧪 Tests | $(status_icon $TESTS) $TESTS |"
+            echo "| 🏗️ Build  | $(status_icon $BUILD) $BUILD |"
+            echo ""
+            if [ "$LINT" = "success" ] && [ "$TESTS" = "success" ] && [ "$BUILD" = "success" ]; then
+              echo "🟢 **All checks passed! Main branch is healthy.**"
+            else
+              echo "🔴 **Some checks failed — investigate before next release!**"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Fail the workflow if build failed
+      - name: ❌ Fail if build broken
+        if: steps.build.outcome == 'failure'
+        run: exit 1

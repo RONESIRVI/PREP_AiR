@@ -1,0 +1,24 @@
+name: 💡 Feature Request
+description: Sadhna में नया feature suggest करो
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem क्या है?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Suggested Solution
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options: ["⏱️ Focus Timer","📅 Planner","🚫 App Blocker","📊 Stats","👥 Groups","🎵 Music","📱 Widget","⭐ PRO","🔧 Settings"]
+    validations:
+      required: true
