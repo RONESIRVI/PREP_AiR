@@ -8,6 +8,8 @@ const AppBlocker = registerPlugin<any>('AppBlocker');
 interface AppInfo {
   packageName: string;
   appName: string;
+  iconBase64: string;
+  category: string;
 }
 
 interface AddScheduleModalProps {
@@ -18,7 +20,8 @@ interface AddScheduleModalProps {
 }
 
 export function AddScheduleModal({ isOpen, onClose, tags, onAdd }: AddScheduleModalProps) {
-  const [selectedTagId, setSelectedTagId] = useState<number>(tags[0]?.id || 1);
+  const [selectedTagId, setSelectedTagId] = useState<number | 'CUSTOM'>(tags[0]?.id || 1);
+  const [customTag, setCustomTag] = useState<string>('');
   const [startTime, setStartTime] = useState<string>("09:00");
   const [endTime, setEndTime] = useState<string>("11:00");
   
@@ -52,6 +55,21 @@ export function AddScheduleModal({ isOpen, onClose, tags, onAdd }: AddScheduleMo
   };
 
   const handleSave = async () => {
+    // Handle Custom Tag
+    let finalTagId = selectedTagId;
+    if (selectedTagId === 'CUSTOM' && customTag.trim()) {
+      const newId = await db.tags.add({
+        name: customTag.trim(),
+        color_hex: 'bg-indigo', // Default custom color
+        goal_min: 60,
+        icon: '📌'
+      });
+      finalTagId = newId;
+    } else if (selectedTagId === 'CUSTOM') {
+      alert("Please enter a custom subject name.");
+      return;
+    }
+
     // Convert time to today's epoch
     const now = new Date();
     const [startH, startM] = startTime.split(':').map(Number);
@@ -66,7 +84,7 @@ export function AddScheduleModal({ isOpen, onClose, tags, onAdd }: AddScheduleMo
     }
 
     await db.schedules.add({
-      tag_id: selectedTagId,
+      tag_id: finalTagId as number,
       start_epoch: startDate.getTime(),
       end_epoch: endDate.getTime(),
       block_apps: JSON.stringify(Array.from(selectedApps))
@@ -92,7 +110,7 @@ export function AddScheduleModal({ isOpen, onClose, tags, onAdd }: AddScheduleMo
             <label className="text-xs font-bold text-slate uppercase tracking-wider mb-2 flex items-center gap-1">
               <TagIcon size={14} /> Subject / Tag
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-2">
               {tags.map(tag => (
                 <button
                   key={tag.id}
@@ -104,7 +122,24 @@ export function AddScheduleModal({ isOpen, onClose, tags, onAdd }: AddScheduleMo
                   <span>{tag.icon}</span> {tag.name}
                 </button>
               ))}
+              <button
+                onClick={() => setSelectedTagId('CUSTOM')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  selectedTagId === 'CUSTOM' ? `bg-indigo text-white shadow-md` : 'bg-slate-100 text-slate hover:bg-slate-200'
+                }`}
+              >
+                <span>➕</span> Custom
+              </button>
             </div>
+            {selectedTagId === 'CUSTOM' && (
+              <input 
+                type="text" 
+                placeholder="e.g. History, Coding..." 
+                value={customTag}
+                onChange={e => setCustomTag(e.target.value)}
+                className="w-full bg-slate-50 border border-border rounded-xl p-3 text-sm font-bold text-ink outline-none focus:border-lime"
+              />
+            )}
           </div>
 
           {/* Time Picker */}
@@ -138,20 +173,41 @@ export function AddScheduleModal({ isOpen, onClose, tags, onAdd }: AddScheduleMo
             <label className="text-xs font-bold text-slate uppercase tracking-wider mb-2 flex items-center gap-1">
               <Smartphone size={14} /> Apps to Block
             </label>
-            <div className="bg-slate-50 border border-border rounded-xl max-h-40 overflow-y-auto p-2 space-y-1">
+            <div className="bg-slate-50 border border-border rounded-xl max-h-48 overflow-y-auto p-2 space-y-4">
               {installedApps.length === 0 ? (
                 <div className="text-xs text-slate text-center py-2">Loading apps...</div>
               ) : (
-                installedApps.map(app => (
-                  <label key={app.packageName} className="flex items-center justify-between p-2 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
-                    <span className="text-sm font-semibold text-ink">{app.appName}</span>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedApps.has(app.packageName)}
-                      onChange={() => toggleApp(app.packageName)}
-                      className="w-4 h-4 text-lime rounded border-slate-300 focus:ring-lime"
-                    />
-                  </label>
+                Object.entries(
+                  installedApps.reduce((acc, app) => {
+                    const cat = app.category || 'Other';
+                    if (!acc[cat]) acc[cat] = [];
+                    acc[cat].push(app);
+                    return acc;
+                  }, {} as Record<string, AppInfo[]>)
+                ).map(([category, apps]) => (
+                  <div key={category}>
+                    <div className="text-[10px] font-bold text-slate uppercase tracking-wider px-2 mb-1">{category}</div>
+                    <div className="space-y-1">
+                      {apps.map(app => (
+                        <label key={app.packageName} className="flex items-center justify-between p-2 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
+                          <div className="flex items-center gap-2">
+                            {app.iconBase64 ? (
+                              <img src={app.iconBase64} alt={app.appName} className="w-6 h-6 rounded-md" />
+                            ) : (
+                              <div className="w-6 h-6 rounded-md bg-slate-300"></div>
+                            )}
+                            <span className="text-sm font-semibold text-ink">{app.appName}</span>
+                          </div>
+                          <input 
+                            type="checkbox" 
+                            checked={selectedApps.has(app.packageName)}
+                            onChange={() => toggleApp(app.packageName)}
+                            className="w-4 h-4 text-lime rounded border-slate-300 focus:ring-lime"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 ))
               )}
             </div>
