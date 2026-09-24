@@ -6,6 +6,11 @@ import { usePushNotifications } from "./hooks/usePushNotifications";
 import { UpdateModal } from "./components/ui/UpdateModal";
 import { AnimatePresence } from "framer-motion";
 import Layout from "./ui/Layout";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import FocusTab from "./components/tabs/FocusTab";
+import PlannerTab from "./components/tabs/PlannerTab";
+import BlocksTab from "./components/tabs/BlocksTab";
+import StatsTab from "./components/tabs/StatsTab";
 
 export default function App() {
   // Initialize Push Notifications
@@ -145,7 +150,16 @@ export default function App() {
 
   return (
     <>
-      <Layout />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<FocusTab />} />
+            <Route path="planner" element={<PlannerTab />} />
+            <Route path="blocks" element={<BlocksTab />} />
+            <Route path="stats" element={<StatsTab />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
       
       <AnimatePresence>
         {isUpdateModalOpen && updateInfo && (

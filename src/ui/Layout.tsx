@@ -1,23 +1,12 @@
-import React, { useState } from "react";
-import FocusTab from "../components/tabs/FocusTab";
-import PlannerTab from "../components/tabs/PlannerTab";
-import BlocksTab from "../components/tabs/BlocksTab";
-import StatsTab from "../components/tabs/StatsTab";
+import React from "react";
 import { Target, Calendar, ShieldAlert, BarChart2 } from "lucide-react";
-
-type Tab = "focus" | "planner" | "blocks" | "stats";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Layout() {
-  const [activeTab, setActiveTab] = useState<Tab>("focus");
-
-  const renderTab = () => {
-    switch (activeTab) {
-      case "focus": return <FocusTab />;
-      case "planner": return <PlannerTab />;
-      case "blocks": return <BlocksTab />;
-      case "stats": return <StatsTab />;
-    }
-  };
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   return (
     <div className="flex flex-col h-screen bg-pale text-ink font-sans">
@@ -41,9 +30,20 @@ export default function Layout() {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto no-scrollbar">
-        {renderTab()}
+      {/* Main Content Area - Rendered via Router */}
+      <main className="flex-1 overflow-x-hidden overflow-y-auto no-scrollbar relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentPath}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="h-full"
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Bottom Navigation */}
@@ -51,26 +51,26 @@ export default function Layout() {
         <NavItem 
           icon={<Target />} 
           label="Focus" 
-          isActive={activeTab === "focus"} 
-          onClick={() => setActiveTab("focus")} 
+          isActive={currentPath === "/" || currentPath.startsWith("/focus")} 
+          onClick={() => navigate("/")} 
         />
         <NavItem 
           icon={<Calendar />} 
           label="Planner" 
-          isActive={activeTab === "planner"} 
-          onClick={() => setActiveTab("planner")} 
+          isActive={currentPath.startsWith("/planner")} 
+          onClick={() => navigate("/planner")} 
         />
         <NavItem 
           icon={<ShieldAlert />} 
           label="Blocks" 
-          isActive={activeTab === "blocks"} 
-          onClick={() => setActiveTab("blocks")} 
+          isActive={currentPath.startsWith("/blocks")} 
+          onClick={() => navigate("/blocks")} 
         />
         <NavItem 
           icon={<BarChart2 />} 
           label="Stats" 
-          isActive={activeTab === "stats"} 
-          onClick={() => setActiveTab("stats")} 
+          isActive={currentPath.startsWith("/stats")} 
+          onClick={() => navigate("/stats")} 
         />
       </nav>
     </div>

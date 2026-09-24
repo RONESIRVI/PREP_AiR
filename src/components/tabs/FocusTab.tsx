@@ -1,8 +1,16 @@
-import React, { useState } from "react";
-import { Play, Pause, Square, RefreshCcw, BellOff } from "lucide-react";
+import React from "react";
+import { Play, Pause, Square, RefreshCcw, BellOff, Settings } from "lucide-react";
+import { useTimerEngine } from "../../hooks/useTimerEngine";
 
 export default function FocusTab() {
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  // 1 = Physics tag for now, 25 minutes pomodoro
+  const { 
+    formattedTime, 
+    isRunning, 
+    dashOffset, 
+    toggleTimer, 
+    resetTimer 
+  } = useTimerEngine(25, 'POMODORO', 1);
 
   return (
     <div className="p-6 h-full flex flex-col items-center">
@@ -22,7 +30,7 @@ export default function FocusTab() {
             strokeWidth="4" 
             fill="none" 
             strokeDasharray="282.7" 
-            strokeDashoffset="70" 
+            strokeDashoffset={dashOffset} 
             strokeLinecap="round" 
             className="transition-all duration-1000 ease-linear"
           />
@@ -30,25 +38,25 @@ export default function FocusTab() {
         
         {/* Timer Text */}
         <div className="text-center z-10 flex flex-col items-center">
-          <span className="text-5xl font-bold text-ink tracking-tight" style={{ fontVariantNumeric: "tabular-nums" }}>25:00</span>
+          <span className="text-5xl font-bold text-ink tracking-tight" style={{ fontVariantNumeric: "tabular-nums" }}>{formattedTime}</span>
           <span className="text-xs font-semibold text-forest uppercase tracking-widest mt-2 bg-green/10 px-3 py-1 rounded-full">Pomodoro</span>
         </div>
       </div>
 
       {/* Controls */}
       <div className="flex items-center gap-6 mb-12">
-        <button className="w-12 h-12 rounded-full bg-white border border-border flex items-center justify-center text-slate hover:text-ink shadow-sm transition-colors">
+        <button onClick={resetTimer} className="w-12 h-12 rounded-full bg-white border border-border flex items-center justify-center text-slate hover:text-ink shadow-sm transition-colors">
           <RefreshCcw size={20} />
         </button>
         
         <button 
-          onClick={() => setIsTimerRunning(!isTimerRunning)}
+          onClick={toggleTimer}
           className="w-20 h-20 rounded-full bg-forest text-white flex items-center justify-center shadow-lg shadow-forest/30 hover:bg-forest-dark transition-all transform hover:scale-105 active:scale-95"
         >
-          {isTimerRunning ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
+          {isRunning ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
         </button>
         
-        <button className="w-12 h-12 rounded-full bg-white border border-border flex items-center justify-center text-slate hover:text-ink shadow-sm transition-colors">
+        <button onClick={resetTimer} className="w-12 h-12 rounded-full bg-white border border-border flex items-center justify-center text-slate hover:text-ink shadow-sm transition-colors">
           <Square size={18} fill="currentColor" />
         </button>
       </div>

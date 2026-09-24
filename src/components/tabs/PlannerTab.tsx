@@ -1,7 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { Plus, Tag, Clock, MoreVertical } from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../../store/db";
+import { AddScheduleModal } from "../ui/AddScheduleModal";
 
 export default function PlannerTab() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Fetch schedules and tags from Dexie DB
+  const tags = useLiveQuery(() => db.tags.toArray()) || [];
+  const schedules = useLiveQuery(() => db.schedules.toArray()) || [];
+
+  // Helper to format epoch to HH:MM AM/PM
+  const formatTime = (epoch: number) => {
+    return new Date(epoch).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
   return (
     <div className="p-6 h-full">
       <div className="flex justify-between items-center mb-6">
@@ -9,7 +22,10 @@ export default function PlannerTab() {
           <h2 className="text-xl font-bold font-[Space Grotesk] text-ink">Study Planner</h2>
           <p className="text-slate text-sm">Organize your day efficiently.</p>
         </div>
-        <button className="w-10 h-10 rounded-full bg-lime text-white flex items-center justify-center shadow-md hover:bg-green transition-colors">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="w-10 h-10 rounded-full bg-lime text-white flex items-center justify-center shadow-md hover:bg-green transition-colors"
+        >
           <Plus size={24} />
         </button>
       </div>
@@ -28,28 +44,37 @@ export default function PlannerTab() {
 
       {/* Schedule List */}
       <div className="space-y-3">
-        <ScheduleItem 
-          title="Morning Focus Block" 
-          time="08:00 AM - 10:30 AM" 
-          tag="Maths" 
-          tagColor="bg-blue" 
-          isActive={false}
-        />
-        <ScheduleItem 
-          title="Deep Work Session" 
-          time="11:00 AM - 01:00 PM" 
-          tag="Physics" 
-          tagColor="bg-amber" 
-          isActive={true}
-        />
-        <ScheduleItem 
-          title="Revision & Notes" 
-          time="03:00 PM - 05:00 PM" 
-          tag="Chemistry" 
-          tagColor="bg-rose" 
-          isActive={false}
-        />
+        {schedules.length === 0 ? (
+          <div className="text-center p-6 text-slate text-sm">No schedules added yet.</div>
+        ) : (
+          schedules.map(schedule => {
+            const tag = tags.find(t => t.id === schedule.tag_id);
+            if (!tag) return null;
+            
+            const timeStr = `${formatTime(schedule.start_epoch)} - ${formatTime(schedule.end_epoch)}`;
+            const now = Date.now();
+            const isActive = now >= schedule.start_epoch && now <= schedule.end_epoch;
+
+            return (
+              <ScheduleItem 
+                key={schedule.id}
+                title={`${tag.name} Block`} 
+                time={timeStr} 
+                tag={tag.name} 
+                tagColor={tag.color_hex} 
+                isActive={isActive}
+              />
+            );
+          })
+        )}
       </div>
+
+      <AddScheduleModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        tags={tags}
+        onAdd={() => {}}
+      />
     </div>
   );
 }
