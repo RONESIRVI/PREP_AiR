@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CSE PREP - 3D Visual Structure</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --layer-gap: 80px;
+      --layer-width: 320px;
+      --layer-height: 200px;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-color);
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #fff;
+    }
+
+    .scene {
+      width: 100%;
+      height: 100%;
+      perspective: 1500px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      position: relative;
+      width: var(--layer-width);
+      height: var(--layer-height);
+      transform-style: preserve-3d;
+      transform: rotateX(60deg) rotateZ(-45deg);
+      transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+      cursor: grab;
+    }
+    
+    .container:active {
+      cursor: grabbing;
+    }
+
+    .layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: var(--layer-width);
+      height: var(--layer-height);
+      background: rgba(30, 41, 59, 0.7);
+      border: 2px solid rgba(147, 197, 253, 0.3);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(99, 102, 241, 0.2);
+      transform-style: preserve-3d;
+      transition: all 0.4s ease;
+    }
+    
+    .layer:hover {
+      background: rgba(49, 46, 129, 0.8);
+      border-color: rgba(129, 140, 248, 0.8);
+      box-shadow: 0 15px 40px rgba(79, 70, 229, 0.4), inset 0 0 30px rgba(129, 140, 248, 0.4);
+    }
+
+    /* 3D Depth Positioning */
+    .layer-1 { transform: translateZ(calc(var(--layer-gap) * 3)); border-top: 4px solid #facc15; }
+    .layer-2 { transform: translateZ(calc(var(--layer-gap) * 2)); border-top: 4px solid #38bdf8; }
+    .layer-3 { transform: translateZ(calc(var(--layer-gap) * 1)); border-top: 4px solid #a78bfa; }
+    .layer-4 { transform: translateZ(0px); border-top: 4px solid #fb7185; }
+    .layer-5 { transform: translateZ(calc(var(--layer-gap) * -1)); border-top: 4px solid #34d399; }
+
+    .layer-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+      transform: translateZ(20px);
+    }
+
+    .layer-desc {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 8px;
+      text-align: center;
+      padding: 0 20px;
+      transform: translateZ(15px);
+    }
+
+    .nodes-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 15px;
+      transform: translateZ(10px);
+    }
+
+    .node {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #e2e8f0;
+      transition: all 0.3s ease;
+    }
+    
+    .layer:hover .node {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Core connecting line */
+    .core-axis {
+      position: absolute;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to bottom, #facc15, #34d399);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) rotateX(90deg) scaleY(2);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+      z-index: -10;
+    }
+    
+    .controls {
+      position: absolute;
+      bottom: 40px;
+      display: flex;
+      gap: 15px;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .btn {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: 0.2s;
+    }
+    
+    .btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: white;
+    }
+
+    .particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scene" id="scene">
+    <div class="container" id="model">
+      
+      <div class="core-axis"></div>
+
+      <!-- User Interface Layer -->
+      <div class="layer layer-1">
+        <div class="layer-title" style="color: #facc15;">1. Home & Dashboard</div>
+        <div class="layer-desc">Command Center, Smart Alerts, Active Timer</div>
+        <div class="nodes-grid">
+          <div class="node">Prep Health Score</div>
+          <div class="node">Smart Recommendation</div>
+          <div class="node">Active Daily Schedule</div>
+        </div>
+      </div>
+
+      <!-- Preparation Layer -->
+      <div class="layer layer-2">
+        <div class="layer-title" style="color: #38bdf8;">2. Prep Tracker</div>
+        <div class="layer-desc">Syllabus Mapping, Subject Levels, Study Execution</div>
+        <div class="nodes-grid">
+          <div class="node">Syllabus Tracker</div>
+          <div class="node">Hierarchical Topics</div>
+          <div class="node">Revision Notes</div>
+        </div>
+      </div>
+
+      <!-- Analytics & Data Layer -->
+      <div class="layer layer-3">
+        <div class="layer-title" style="color: #a78bfa;">3. Analytics Engine</div>
+        <div class="layer-desc">Data aggregation, Pattern recognition, Heatmaps</div>
+        <div class="nodes-grid">
+          <div class="node">Dynamic Weak Areas</div>
+          <div class="node">Mock Test Logs</div>
+          <div class="node">Progress Telemetry</div>
+        </div>
+      </div>
+
+      <!-- Toppers Blueprint Layer -->
+      <div class="layer layer-4">
+        <div class="layer-title" style="color: #fb7185;">4. Topper Strategy</div>
+        <div class="layer-desc">Reference implementations, routines and templates</div>
+        <div class="nodes-grid">
+          <div class="node">AIR 1 Blueprints</div>
+          <div class="node">Routine Adoption</div>
+          <div class="node">Strategy Config</div>
+        </div>
+      </div>
+      
+      <!-- Foundation / Data Layer -->
+      <div class="layer layer-5">
+        <div class="layer-title" style="color: #34d399;">5. Core State & Data</div>
+        <div class="layer-desc">Global State (App.tsx), Firebase Sync, Local Storage</div>
+        <div class="nodes-grid">
+          <div class="node">useFirestoreData</div>
+          <div class="node">localStorage</div>
+          <div class="node">Types (Interfaces)</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="setView('isometric')">Isometric View</button>
+    <button class="btn" onclick="setView('front')">Front View</button>
+    <button class="btn" onclick="setView('top')">Top Down</button>
+    <button class="btn" onclick="setView('side')">Side Profile</button>
+  </div>
+
+  <script>
+    const model = document.getElementById('model');
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let currentRotation = { x: 60, y: 0, z: -45 };
+
+    function setView(viewType) {
+      model.style.transition = "transform 1s cubic-bezier(0.2, 0.8, 0.2, 1)";
+      if(viewType === 'isometric') currentRotation = { x: 60, y: 0, z: -45 };
+      if(viewType === 'front') currentRotation = { x: 0, y: 0, z: 0 };
+      if(viewType === 'top') currentRotation = { x: 90, y: 0, z: 0 };
+      if(viewType === 'side') currentRotation = { x: 0, y: -90, z: 0 };
+      
+      updateTransform();
+    }
+
+    function updateTransform() {
+      model.style.transform = `rotateX(${currentRotation.x}deg) rotateY(${currentRotation.y}deg) rotateZ(${currentRotation.z}deg)`;
+    }
+
+    document.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      model.style.transition = "none"; // Disable CSS transition during drag
+      previousMousePosition = { x: e.offsetX, y: e.offsetY };
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const deltaMove = {
+        x: e.offsetX - previousMousePosition.x,
+        y: e.offsetY - previousMousePosition.y
+      };
+
+      currentRotation.z += (deltaMove.x * 0.5);
+      currentRotation.x -= (deltaMove.y * 0.5);
+
+      updateTransform();
+      previousMousePosition = { x: e.offsetX, y: e.offsetY };
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      model.style.transition = "transform 1s cubic-bezier(0.2, 0.8, 0.2, 1)";
+    });
+    
+    // Initial animation
+    setTimeout(() => {
+        model.style.transform = `rotateX(55deg) rotateZ(-35deg)`;
+    }, 500);
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+name: Publish Live Update
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Web App
+        run: npm run build
+
+      - name: Zip dist
+        run: cd dist && zip -r ../dist.zip *
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v2.1.${{ github.run_number }}
+          files: dist.zip
+          name: Live Update v2.1.${{ github.run_number }}
+          body: |
+            ### What's New in this Update 🚀
+            
+            ${{ github.event.head_commit.message }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

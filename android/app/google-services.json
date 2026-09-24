@@ -1,0 +1,29 @@
+﻿{
+  "project_info": {
+    "project_number": "1089531561172",
+    "project_id": "upsc-conquest",
+    "storage_bucket": "upsc-conquest.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1089531561172:android:49dd52b7fb69cc128ce741",
+        "android_client_info": {
+          "package_name": "com.upscconquest.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAApIPg2Fg_s4S1ZUKyKEx_XQA_xRvVgSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

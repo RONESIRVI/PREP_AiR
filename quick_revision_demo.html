@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Revision Notes - Design Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        h1, h2, h3, h4, h5, h6, .outfit-font {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Glassmorphism custom utilities */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        .gradient-border {
+            position: relative;
+            background: #fff;
+            background-clip: padding-box;
+            border: 2px solid transparent;
+            border-radius: 1.5rem;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            z-index: -1;
+            margin: -2px;
+            border-radius: inherit;
+            background: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
+        }
+    </style>
+</head>
+<body class="p-8 pb-20">
+    <div class="max-w-6xl mx-auto">
+        <header class="text-center mb-16">
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Quick Revision Notes<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Design Choices</span></h1>
+            <p class="text-slate-500 text-lg">Pick the design you like the most for the CSE PREP app.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+            <!-- DESIGN OPTION 1: Minimalist & Clean (Bento Style) -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-bold text-slate-800 text-center uppercase tracking-widest border-b-2 border-indigo-100 pb-2">Design 1: Minimal & Clean</h2>
+                
+                <div class="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 bg-rose-100 text-rose-700 text-xs font-bold rounded-lg uppercase tracking-wider">🔥 High Yield</span>
+                            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-lg uppercase">GS2 • Polity</span>
+                        </div>
+                        <button class="text-slate-400 hover:text-indigo-600 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                        </button>
+                    </div>
+
+                    <h3 class="text-2xl font-bold text-slate-900 mb-4 leading-tight group-hover:text-indigo-600 transition-colors">Fundamental Rights (Art 12-35)</h3>
+                    
+                    <ul class="space-y-3 mb-6">
+                        <li class="flex items-start gap-3">
+                            <div class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0"></div>
+                            <span class="text-sm text-slate-700 leading-relaxed">Magna Carta of India. Justiciable in nature (Art 32).</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0"></div>
+                            <span class="text-sm text-slate-700 leading-relaxed">Exceptions: Armed forces (Art 33), Martial law (Art 34).</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0"></div>
+                            <span class="text-sm text-slate-700 leading-relaxed">Only for citizens: Art 15, 16, 19, 29, 30.</span>
+                        </li>
+                    </ul>
+
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                        <div class="flex gap-2">
+                            <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2 py-1 rounded-md">#PRELIMS</span>
+                            <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2 py-1 rounded-md">#CORE</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Just now</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DESIGN OPTION 2: Modern Glassmorphism & Vibrant -->
+            <div class="space-y-4 relative">
+                <!-- Decorative background blobs for glass effect -->
+                <div class="absolute -top-10 -left-10 w-32 h-32 bg-purple-300 rounded-full mix-blend-multiply filter blur-2xl opacity-50 z-0"></div>
+                <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-300 rounded-full mix-blend-multiply filter blur-2xl opacity-50 z-0"></div>
+                
+                <h2 class="text-xl font-bold text-slate-800 text-center uppercase tracking-widest border-b-2 border-indigo-100 pb-2 relative z-10">Design 2: Modern Glass</h2>
+                
+                <div class="glass-card rounded-3xl p-6 relative z-10 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group">
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1 bg-gradient-to-r from-orange-400 to-rose-500 text-white px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg>
+                                High Yield
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold text-slate-400 bg-white/60 px-2 py-1 rounded-lg">GS2 • Polity</span>
+                    </div>
+
+                    <h3 class="text-2xl font-black text-slate-800 mb-5 tracking-tight group-hover:bg-clip-text group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-purple-600 transition-all">Fundamental Rights (Art 12-35)</h3>
+                    
+                    <div class="bg-white/50 rounded-2xl p-4 mb-5 border border-white/60">
+                        <ul class="space-y-2.5">
+                            <li class="flex items-start gap-2.5">
+                                <svg class="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="text-sm text-slate-800 font-medium">Magna Carta of India. Justiciable in nature (Art 32).</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <svg class="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="text-sm text-slate-800 font-medium">Exceptions: Armed forces (Art 33), Martial law (Art 34).</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <svg class="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="text-sm text-slate-800 font-medium">Only for citizens: Art 15, 16, 19, 29, 30.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex flex-wrap gap-1.5">
+                            <span class="text-[10px] font-bold text-slate-600 bg-white shadow-sm px-2 py-1 rounded-full border border-slate-100">#PRELIMS</span>
+                            <span class="text-[10px] font-bold text-slate-600 bg-white shadow-sm px-2 py-1 rounded-full border border-slate-100">#CORE</span>
+                        </div>
+                        <button class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors border border-slate-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DESIGN OPTION 3: High Contrast Neumorphic/Gradient Edge -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-bold text-slate-800 text-center uppercase tracking-widest border-b-2 border-indigo-100 pb-2">Design 3: Gradient Edge (Dark)</h2>
+                
+                <div class="gradient-border group hover:-translate-y-2 transition-transform duration-300 cursor-pointer shadow-lg">
+                    <div class="p-6 rounded-[1.4rem] bg-slate-900 h-full relative overflow-hidden">
+                        <!-- Subtle grid background -->
+                        <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 20px 20px;"></div>
+                        
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="px-3 py-1 bg-indigo-500/20 border border-indigo-500/50 rounded-lg">
+                                    <span class="text-xs font-bold text-indigo-300 uppercase tracking-widest">GS2 • Polity</span>
+                                </div>
+                                <div class="px-3 py-1 bg-rose-500/20 border border-rose-500/50 rounded-lg flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                                    <span class="text-[10px] font-bold text-rose-300 uppercase tracking-widest">High Yield</span>
+                                </div>
+                            </div>
+
+                            <h3 class="text-2xl font-bold text-white mb-5 leading-tight group-hover:text-indigo-300 transition-colors">Fundamental Rights (Art 12-35)</h3>
+                            
+                            <ul class="space-y-4 mb-6">
+                                <li class="flex items-start gap-3">
+                                    <div class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="text-[10px] font-bold text-slate-400">1</span>
+                                    </div>
+                                    <span class="text-sm text-slate-300 leading-relaxed font-medium">Magna Carta of India. Justiciable in nature (Art 32).</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <div class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="text-[10px] font-bold text-slate-400">2</span>
+                                    </div>
+                                    <span class="text-sm text-slate-300 leading-relaxed font-medium">Exceptions: Armed forces (Art 33), Martial law (Art 34).</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <div class="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="text-[10px] font-bold text-slate-400">3</span>
+                                    </div>
+                                    <span class="text-sm text-slate-300 leading-relaxed font-medium">Only for citizens: Art 15, 16, 19, 29, 30.</span>
+                                </li>
+                            </ul>
+
+                            <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
+                                <div class="flex gap-2">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">#PRELIMS</span>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">#CORE</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

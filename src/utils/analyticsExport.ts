@@ -1,0 +1,287 @@
+import { toPng, toJpeg } from "html-to-image";
+import { jsPDF } from "jspdf";
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WHY html-to-image instead of html2canvas?
+//
+// html2canvas v1.4.x CANNOT parse TailwindCSS v4 color functions:
+//   oklch(), oklab(), lch(), lab()
+// → Throws: "attempting to parse an unsupported color function oklch"
+// → Entire export fails regardless of any workaround attempted.
+//
+// html-to-image uses SVG <foreignObject> rendering. It reads COMPUTED styles
+// via window.getComputedStyle() which the browser has already resolved to
+// rgb/rgba — no oklch ever reaches its renderer. Works perfectly with
+// TailwindCSS v4, modern CSS, Capacitor WebView, and all browsers.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AnalyticsExportOptions {
+  format: "pdf" | "png";
+  aspirantName: string;
+  targetExam: string;
+  includeHeatmap: boolean;
+  includeProgress: boolean;
+  includeMocks: boolean;
+  includeGapAnalysis: boolean;
+  includeRankBenchmarks: boolean;
+  /** Syllabus mastery % (0-100) — used in share text */
+  syllabusProgress: number;
+  /** Total study hours logged — used in share text */
+  totalHoursLogged: string;
+}
+
+export interface ExportResult {
+  success: boolean;
+  message: string;
+  filename?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ELEMENT VISIBILITY FIX
+//
+// The report element (#printable-analytics-report) sits inside a `sr-only`
+// wrapper (position:absolute; width:1px; height:1px) and a modal with
+// overflow:auto. Both clip the element so it renders at 1px.
+//
+// Fix: Move the element to document.body at a fixed off-screen position
+// before capturing, then restore it afterwards.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function moveToOffScreen(element: HTMLElement): {
+  wrapper: HTMLDivElement;
+  restore: () => void;
+} {
+  const originalParent = element.parentElement!;
+  const originalNextSibling = element.nextSibling;
+  const prevStyle = element.getAttribute('style') || '';
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText =
+    'position:fixed;top:-99999px;left:0;z-index:-9999;' +
+    'width:1200px;overflow:visible;background:#ffffff;';
+  wrapper.appendChild(element);
+  document.body.appendChild(wrapper);
+
+  element.style.cssText =
+    'display:block!important;visibility:visible!important;' +
+    'opacity:1!important;clip:auto!important;' +
+    'width:1000px;background:#ffffff;';
+
+  return {
+    wrapper,
+    restore: () => {
+      element.setAttribute('style', prevStyle);
+      if (originalNextSibling) {
+        originalParent.insertBefore(element, originalNextSibling);
+      } else {
+        originalParent.appendChild(element);
+      }
+      document.body.removeChild(wrapper);
+    },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAPTURE
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function captureAsPng(element: HTMLElement): Promise<string> {
+  return toPng(element, {
+    quality: 1,
+    pixelRatio: 4,        // 384 DPI — High-end print quality (4000px wide)
+    backgroundColor: '#ffffff',
+    skipAutoScale: false,
+  });
+}
+
+async function captureAsJpeg(element: HTMLElement): Promise<string> {
+  return toJpeg(element, {
+    quality: 0.98,
+    pixelRatio: 4,        // 384 DPI — High-end print quality (4000px wide)
+    backgroundColor: '#ffffff',
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN EXPORT FUNCTION
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function exportAnalyticsDocument(
+  elementId: string,
+  options: AnalyticsExportOptions,
+  onProgress?: (msg: string) => void
+): Promise<ExportResult> {
+  const element = document.getElementById(elementId);
+  if (!element) {
+    return {
+      success: false,
+      message: 'Export failed: Report canvas not found. Try reopening the export dialog.',
+    };
+  }
+
+  const { restore } = moveToOffScreen(element);
+
+  try {
+    // Let layout settle after moving element
+    await new Promise((r) => setTimeout(r, 200));
+
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `RAS_Analytics_${timestamp}`;
+
+    // Dynamic share text
+    const shareDate = new Date().toLocaleDateString('en-IN', { dateStyle: 'long' });
+    const shareText =
+      `📊 ${options.targetExam} | Performance Blueprint\n\n` +
+      `👤 Candidate: ${options.aspirantName}\n` +
+      `📅 Date: ${shareDate}\n` +
+      `📚 Syllabus Mastery: ${options.syllabusProgress}%\n` +
+      `⏱️ Study Hours Logged: ${options.totalHoursLogged} hrs\n\n` +
+      `Generated by RAS CSE Master Hub 🎯`;
+
+    // ────────────────── PNG ──────────────────
+    if (options.format === 'png') {
+      if (onProgress) onProgress('Rendering report (Pass 1 of 2)...');
+      // Two-pass render: first pass loads fonts/resources, second captures them
+      await captureAsPng(element);
+      if (onProgress) onProgress('Generating high-resolution PNG...');
+      const imageUri = await captureAsPng(element);
+
+      restore();
+
+      if (Capacitor.isNativePlatform()) {
+        if (onProgress) onProgress('Saving image to device...');
+        const base64Data = imageUri.split(',')[1];
+
+        const savedFile = await Filesystem.writeFile({
+          path: `${filename}.png`,
+          data: base64Data,
+          directory: Directory.Cache,
+          recursive: true,
+        });
+
+        try {
+          await Filesystem.writeFile({
+            path: `RAS Hub/Reports/${filename}.png`,
+            data: base64Data,
+            directory: Directory.Documents,
+            recursive: true,
+          });
+        } catch { /* non-fatal */ }
+
+        await Share.share({
+          title: 'RAS Analytics Report',
+          text: shareText,
+          url: savedFile.uri,
+          dialogTitle: 'Save to Gallery or Share',
+        });
+
+        return {
+          success: true,
+          message: '✅ Report image ready! Save to Gallery using the share sheet.',
+          filename: `${filename}.png`,
+        };
+      }
+
+      const link = document.createElement('a');
+      link.download = `${filename}.png`;
+      link.href = imageUri;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      return {
+        success: true,
+        message: `✅ PNG downloaded: ${filename}.png`,
+        filename: `${filename}.png`,
+      };
+    }
+
+    // ────────────────── PDF ──────────────────
+    if (options.format === 'pdf') {
+      if (onProgress) onProgress('Rendering report (Pass 1 of 2)...');
+      await captureAsJpeg(element); // warm-up pass
+      if (onProgress) onProgress('Compiling multi-page PDF...');
+      const imgData = await captureAsJpeg(element);
+
+      restore();
+
+      // Build jsPDF from the captured image
+      const img = new Image();
+      img.src = imgData;
+      await new Promise<void>((res, rej) => {
+        img.onload = () => res();
+        img.onerror = rej;
+      });
+
+      const imgWidth = 210; // A4 width mm
+      const pageHeight = 297;
+      const imgHeight = (img.height * imgWidth) / img.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        if (onProgress) onProgress('Saving PDF to device...');
+        const pdfBase64 = pdf.output('datauristring').split(',')[1];
+
+        const savedFile = await Filesystem.writeFile({
+          path: `${filename}.pdf`,
+          data: pdfBase64,
+          directory: Directory.Cache,
+          recursive: true,
+        });
+
+        try {
+          await Filesystem.writeFile({
+            path: `RAS Hub/Reports/${filename}.pdf`,
+            data: pdfBase64,
+            directory: Directory.Documents,
+            recursive: true,
+          });
+        } catch { /* non-fatal */ }
+
+        await Share.share({
+          title: 'RAS Analytics Report PDF',
+          text: shareText,
+          url: savedFile.uri,
+          dialogTitle: 'Save PDF or Share',
+        });
+
+        return {
+          success: true,
+          message: '✅ PDF ready! Save or share using the sheet below.',
+          filename: `${filename}.pdf`,
+        };
+      }
+
+      pdf.save(`${filename}.pdf`);
+      return {
+        success: true,
+        message: `✅ PDF downloaded: ${filename}.pdf`,
+        filename: `${filename}.pdf`,
+      };
+    }
+
+    restore();
+    return { success: false, message: 'Unknown export format selected.' };
+  } catch (error: any) {
+    restore();
+    console.error('[Analytics Export] Failed:', error);
+    const reason: string =
+      typeof error?.message === 'string' ? error.message : String(error);
+    return { success: false, message: `Export failed: ${reason}` };
+  }
+}
