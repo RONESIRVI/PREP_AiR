@@ -31,8 +31,8 @@ public class AppBlockerService extends AccessibilityService {
                 if (blockedPackages.contains(packageName)) {
                     Log.d(TAG, "BLOCKED Distracting App: " + packageName);
                     
-                    // Launch MainActivity to overlay/block the app
-                    Intent intent = new Intent(this, MainActivity.class);
+                    Intent intent = new Intent(this, WarningActivity.class);
+                    intent.putExtra("package", packageName);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                 }

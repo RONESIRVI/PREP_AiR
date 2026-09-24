@@ -11,6 +11,10 @@ import FocusTab from "./components/tabs/FocusTab";
 import PlannerTab from "./components/tabs/PlannerTab";
 import BlocksTab from "./components/tabs/BlocksTab";
 import StatsTab from "./components/tabs/StatsTab";
+import { db } from "./store/db";
+import { registerPlugin } from '@capacitor/core';
+
+const AppBlocker = registerPlugin<any>('AppBlocker');
 
 export default function App() {
   // Initialize Push Notifications
@@ -147,6 +151,46 @@ export default function App() {
       setUpdateProgress(null);
     }
   };
+
+  // Global Schedule Monitor
+  useEffect(() => {
+    const syncSchedules = async () => {
+      try {
+        const now = Date.now();
+        const schedules = await db.schedules.toArray();
+        let activeApps = new Set<string>();
+        let isAnyScheduleActive = false;
+
+        for (const sched of schedules) {
+          if (now >= sched.start_epoch && now <= sched.end_epoch) {
+            isAnyScheduleActive = true;
+            try {
+              const apps: string[] = JSON.parse(sched.block_apps);
+              apps.forEach(a => activeApps.add(a));
+            } catch (e) {}
+          }
+        }
+
+        // Always respect user's global Strict Mode preference
+        const globalStrict = localStorage.getItem('strictMode') === 'true';
+
+        if (isAnyScheduleActive) {
+          await AppBlocker.setBlockedApps({ packages: Array.from(activeApps) });
+          await AppBlocker.setStrictMode({ enabled: true }); // Auto-enable strict during schedule
+        } else {
+          // Restore global setting
+          await AppBlocker.setStrictMode({ enabled: globalStrict });
+        }
+      } catch (e) {
+        // console.log("Native sync failed", e);
+      }
+    };
+
+    const interval = setInterval(syncSchedules, 60000); // Check every minute
+    syncSchedules(); // Initial check
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>

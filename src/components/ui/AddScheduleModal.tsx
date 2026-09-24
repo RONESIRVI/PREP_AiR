@@ -1,6 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db, Tag } from '../../store/db';
-import { X, Clock, Tag as TagIcon } from 'lucide-react';
+import { X, Clock, Tag as TagIcon, Smartphone } from 'lucide-react';
+import { registerPlugin } from '@capacitor/core';
+
+const AppBlocker = registerPlugin<any>('AppBlocker');
+
+interface AppInfo {
+  packageName: string;
+  appName: string;
+}
 
 interface AddScheduleModalProps {
   isOpen: boolean;
@@ -13,8 +21,35 @@ export function AddScheduleModal({ isOpen, onClose, tags, onAdd }: AddScheduleMo
   const [selectedTagId, setSelectedTagId] = useState<number>(tags[0]?.id || 1);
   const [startTime, setStartTime] = useState<string>("09:00");
   const [endTime, setEndTime] = useState<string>("11:00");
+  
+  const [installedApps, setInstalledApps] = useState<AppInfo[]>([]);
+  const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (isOpen) {
+      AppBlocker.getInstalledApps().then((res: any) => {
+        if (res && res.apps) {
+          setInstalledApps(res.apps);
+        }
+      }).catch(() => {
+        // Mock data for browser testing
+        setInstalledApps([
+          { packageName: "com.instagram.android", appName: "Instagram" },
+          { packageName: "com.google.android.youtube", appName: "YouTube" },
+          { packageName: "com.facebook.katana", appName: "Facebook" }
+        ]);
+      });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const toggleApp = (pkg: string) => {
+    const next = new Set(selectedApps);
+    if (next.has(pkg)) next.delete(pkg);
+    else next.add(pkg);
+    setSelectedApps(next);
+  };
 
   const handleSave = async () => {
     // Convert time to today's epoch
@@ -34,7 +69,7 @@ export function AddScheduleModal({ isOpen, onClose, tags, onAdd }: AddScheduleMo
       tag_id: selectedTagId,
       start_epoch: startDate.getTime(),
       end_epoch: endDate.getTime(),
-      block_apps: "[]"
+      block_apps: JSON.stringify(Array.from(selectedApps))
     });
 
     onAdd();
@@ -95,6 +130,30 @@ export function AddScheduleModal({ isOpen, onClose, tags, onAdd }: AddScheduleMo
                 onChange={(e) => setEndTime(e.target.value)}
                 className="w-full bg-slate-50 border border-border rounded-xl p-3 text-sm font-bold text-ink outline-none focus:border-lime"
               />
+            </div>
+          </div>
+
+          {/* App Selector */}
+          <div>
+            <label className="text-xs font-bold text-slate uppercase tracking-wider mb-2 flex items-center gap-1">
+              <Smartphone size={14} /> Apps to Block
+            </label>
+            <div className="bg-slate-50 border border-border rounded-xl max-h-40 overflow-y-auto p-2 space-y-1">
+              {installedApps.length === 0 ? (
+                <div className="text-xs text-slate text-center py-2">Loading apps...</div>
+              ) : (
+                installedApps.map(app => (
+                  <label key={app.packageName} className="flex items-center justify-between p-2 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
+                    <span className="text-sm font-semibold text-ink">{app.appName}</span>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedApps.has(app.packageName)}
+                      onChange={() => toggleApp(app.packageName)}
+                      className="w-4 h-4 text-lime rounded border-slate-300 focus:ring-lime"
+                    />
+                  </label>
+                ))
+              )}
             </div>
           </div>
 

@@ -110,6 +110,11 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
 
+        <activity android:name=".WarningActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance" />
+
         <!-- App Blocker Accessibility Service -->
         <service android:name=".AppBlockerService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
