@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Shield, Smartphone, Globe, Lock, AlertTriangle } from "lucide-react";
+import { registerPlugin } from '@capacitor/core';
+
+// Initialize the custom native plugin
+const AppBlocker = registerPlugin<any>('AppBlocker');
 
 export default function BlocksTab() {
   const [strictMode, setStrictMode] = useState(false);
@@ -27,14 +31,22 @@ export default function BlocksTab() {
     setter(value);
   };
 
-  const handleStrictToggle = () => {
+  const handleStrictToggle = async () => {
     const newValue = !strictMode;
     if (!newValue) {
       const confirm = window.confirm("Are you sure you want to disable Strict Mode? This defeats the purpose of your focus session.");
       if (!confirm) return;
     }
+    
     localStorage.setItem('strictMode', String(newValue));
     setStrictMode(newValue);
+    
+    // Call Native Plugin!
+    try {
+      await AppBlocker.setStrictMode({ enabled: newValue });
+    } catch (e) {
+      console.log("AppBlocker native plugin not available in browser.");
+    }
   };
 
   return (

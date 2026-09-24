@@ -4,4 +4,5 @@
     <string name="title_activity_main">PREP AiR</string>
     <string name="package_name">com.prepair.app</string>
     <string name="custom_url_scheme">com.prepair.app</string>
+    <string name="accessibility_service_description">PREP AiR Focus Mode requires this service to block distracting apps and enforce strict study discipline.</string>
 </resources>

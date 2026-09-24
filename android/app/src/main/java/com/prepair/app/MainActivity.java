@@ -9,5 +9,6 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         registerPlugin(ScreenPinningPlugin.class);
         registerPlugin(AppIconPlugin.class);
+        registerPlugin(AppBlockerPlugin.class);
     }
 }
