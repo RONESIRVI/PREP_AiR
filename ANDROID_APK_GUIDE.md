@@ -1,4 +1,4 @@
-# UPSC Conquest - Android APK GitHub Actions Guide
+# PREP AiR - Android APK GitHub Actions Guide
 
 इस गाइड की मदद से आप अपने प्रोजेक्ट को GitHub पर पुश करके सीधे **Android APK** जनरेट और डाउनलोड कर सकते हैं।
 
@@ -25,7 +25,7 @@ git push origin main
 ### स्टेप 3: APK डाउनलोड करें
 1. पूर्ण हुए वर्कफ़्लो रन पर क्लिक करें।
 2. नीचे **Artifacts** सेक्शन में जाएं।
-3. **`UPSC-Conquest-Android-App-Debug`** पर क्लिक करके ज़िप डाउनलोड करें।
+3. **`PREP-AiR-Android-App-Debug`** पर क्लिक करके ज़िप डाउनलोड करें।
 4. ज़िप अनपैक करें और अपने एंड्रॉइड फोन में APK इनस्टॉल करें।
 
 ---
