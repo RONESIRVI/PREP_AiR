@@ -7,6 +7,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import org.json.JSONArray;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Arrays;
 import android.content.pm.PackageManager;
 import android.content.pm.ApplicationInfo;
 import android.graphics.drawable.Drawable;
