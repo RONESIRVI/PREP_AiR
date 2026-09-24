@@ -1,4 +1,4 @@
-package com.upscconquest.app;
+package com.prepair.app;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;

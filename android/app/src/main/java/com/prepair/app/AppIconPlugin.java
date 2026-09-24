@@ -1,4 +1,4 @@
-package com.upscconquest.app;
+package com.prepair.app;
 
 import android.content.ComponentName;
 import android.content.pm.PackageManager;

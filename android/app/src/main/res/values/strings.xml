@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">PREP AiR</string>
     <string name="title_activity_main">PREP AiR</string>
-    <string name="package_name">com.upscconquest.app</string>
-    <string name="custom_url_scheme">com.upscconquest.app</string>
+    <string name="package_name">com.prepair.app</string>
+    <string name="custom_url_scheme">com.prepair.app</string>
 </resources>
