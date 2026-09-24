@@ -5,6 +5,7 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import { usePushNotifications } from "./hooks/usePushNotifications";
 import { UpdateModal } from "./components/ui/UpdateModal";
 import { AnimatePresence } from "framer-motion";
+import Layout from "./ui/Layout";
 
 export default function App() {
   // Initialize Push Notifications
@@ -144,23 +145,7 @@ export default function App() {
 
   return (
     <>
-      <div
-        className="min-h-screen bg-slate-900 text-white font-sans antialiased flex flex-col items-center justify-center p-6"
-      >
-        <div className="w-full max-w-md text-center space-y-8">
-          <img 
-            src="/welcome-image.png" 
-            alt="Welcome Update Soon" 
-            className="w-full h-auto rounded-3xl shadow-2xl object-cover ring-4 ring-white/10"
-          />
-          <h1 className="text-4xl font-black tracking-tight bg-gradient-to-br from-amber-200 to-yellow-500 bg-clip-text text-transparent drop-shadow-sm">
-            Welcome
-          </h1>
-          <p className="text-slate-400 text-lg font-medium tracking-wide uppercase" style={{ letterSpacing: '0.2em' }}>
-            Update Soon
-          </p>
-        </div>
-      </div>
+      <Layout />
       
       <AnimatePresence>
         {isUpdateModalOpen && updateInfo && (

@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ink: #07160E;
+  --color-forest: #0D5C3A;
+  --color-forest-dark: #062a17;
+  --color-green: #16A34A;
+  --color-lime: #22C55E;
+  --color-pale: #F0FDF4;
+  --color-amber: #D97706;
+  --color-amber-bg: #FEF3C7;
+  --color-blue: #2563EB;
+  --color-blue-bg: #EFF6FF;
+  --color-rose: #E11D48;
+  --color-rose-bg: #FFF1F2;
+  --color-border: #D1FAE5;
+  --color-card: #F8FFFE;
+}
+
 @layer utilities {
 
   /* Hide scrollbar for Chrome, Safari and Opera */
