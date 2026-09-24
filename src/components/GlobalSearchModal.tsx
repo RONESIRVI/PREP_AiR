@@ -119,7 +119,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             <div className="py-8 text-center text-slate-500 space-y-2">
               <Sparkles className="w-8 h-8 mx-auto text-indigo-500 mb-2" />
               <p className="text-sm font-semibold text-slate-700">
-                Type any keyword to search across the entire CSE PREP.
+                Type any keyword to search across the entire PREP AiR.
               </p>
               <p className="text-xs text-slate-500">
                 Popular: "Polity", "Laxmikanth", "Aditya Srivastava",
@@ -309,7 +309,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
         {/* Footer info */}
         <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-500 flex justify-between items-center font-medium">
           <span>Navigate using tabs or click any card</span>
-          <span>CSE PREP Complete Database</span>
+          <span>PREP AiR Complete Database</span>
         </div>
       </div>
     </div>

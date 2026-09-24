@@ -1,6 +1,6 @@
 {
-  "name": "CSE PREP",
-  "description": "Comprehensive CSE PREP app featuring Toppers' strategies, books, routines, notes and interviews, interactive syllabus & study tracker, spaced revision, PYQs, and deep performance gap analytics.",
+  "name": "PREP AiR",
+  "description": "Comprehensive PREP AiR app featuring Toppers' strategies, books, routines, notes and interviews, interactive syllabus & study tracker, spaced revision, PYQs, and deep performance gap analytics.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

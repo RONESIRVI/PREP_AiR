@@ -313,7 +313,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8 }}
         >
-          CSE PREP
+          PREP AiR
         </motion.h1>
         
         <motion.p 

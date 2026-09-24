@@ -107,7 +107,7 @@ export default function App() {
                 await LocalNotifications.schedule({
                   notifications: [
                     {
-                      title: "🆕 RAS Conquest Update!",
+                      title: "🆕 PREP AiR Update!",
                       body: `Version ${data.tag_name} उपलब्ध है। App में जाकर 'Update Now' पर क्लिक करें।`,
                       id: 10,
                       schedule: { at: new Date(Date.now() + 500) },
@@ -1202,12 +1202,12 @@ export default function App() {
                 C
               </span>
               <span className="font-semibold text-slate-700">
-                CSE PREP Master Hub
+                PREP AiR Master Hub
               </span>
               <span>• Bento Grid Preparation Suite</span>
             </div>
             <div className="flex items-center gap-4 text-[11px] text-slate-500">
-              <span>CSE PREP App</span>
+              <span>PREP AiR App</span>
               <span className="text-indigo-600 font-bold">
                 • 100% Offline-Safe Storage
               </span>
